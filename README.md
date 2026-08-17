@@ -11,7 +11,7 @@ similar). One clone holds every dependency.
 |---|---|
 | `templates/journals-README.md` | The planning contract, committed as `journals/README.md` |
 | `templates/AGENTS.md` | The AI entry point, committed as `AGENTS.md` |
-| `skills/ste-writing/` | The STE prose skill (vendored from Dark-Wagon-Studio/ste-writing) |
+| `skills/ste-writing/` | The STE prose skill (canonical home) |
 | `prompts/journals-init.md` | The installer instructions the pi bootstrap executes |
 
 ## Install (manual)
@@ -31,12 +31,6 @@ similar). One clone holds every dependency.
 Run `/journals-init` from the thin bootstrap prompt. It clones this repo to
 a temp directory, executes `prompts/journals-init.md` against the target
 repository, and removes the temp clone when it finishes.
-
-## Sync
-
-`skills/ste-writing/` is vendored. Its canonical home is
-[Dark-Wagon-Studio/ste-writing](https://github.com/Dark-Wagon-Studio/ste-writing).
-Edit the skill there, then copy it here. Keep the two in step.
 
 ## Versioning
 

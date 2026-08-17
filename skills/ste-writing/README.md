@@ -7,12 +7,10 @@ STE-flavored (general prose, no dictionary lockdown).
 
 ## Install
 
-Drop the folder into your repo's skills directory:
-
-```
-git clone --depth 1 https://github.com/Dark-Wagon-Studio/ste-writing.git skills/ste-writing
-rm -rf skills/ste-writing/.git
-```
+Copy the `ste-writing/` folder from this repo into your repo's skills
+directory, or run the
+[Dark-Wagon-Studio/harness](https://github.com/Dark-Wagon-Studio/harness)
+installer, which installs it with the full journals workflow.
 
 Then load `skills/ste-writing/SKILL.md` when you want the style applied.
 
