@@ -12,6 +12,7 @@ similar). One clone holds every dependency.
 | `templates/journals-README.md` | The planning contract, committed as `journals/README.md` |
 | `templates/AGENTS.md` | The AI entry point, committed as `AGENTS.md` |
 | `skills/ste-writing/` | The STE prose skill (canonical home) |
+| `skills/jtbd-coach/` | The JTBD coaching skill (canonical home, optional at install) |
 | `prompts/journals-init.md` | The installer instructions the pi bootstrap executes |
 
 ## Install (manual)
@@ -21,9 +22,12 @@ similar). One clone holds every dependency.
    `AGENTS.md`, merge the *Planning workflow*, *Session rhythm*, *Confirm
    before acting*, and *Skills* sections instead.
 3. Copy `skills/ste-writing/` to `skills/ste-writing/`.
-4. Add `.agents/` and `**/.pi-subagents/*` to `.gitignore`. Create
+4. Optionally copy `skills/jtbd-coach/` to `skills/jtbd-coach/` and add its
+   row (text in `prompts/journals-init.md`, Phase 3.5) to the *Skills*
+   table in `AGENTS.md`.
+5. Add `.agents/` and `**/.pi-subagents/*` to `.gitignore`. Create
    `.agents/.gitkeep`.
-5. Record the install as `journals/harness/00-harness-install.md` with
+6. Record the install as `journals/harness/00-harness-install.md` with
    `Status: Executed.`
 
 ## Install (pi)
