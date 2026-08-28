@@ -54,15 +54,23 @@ by reading the `SKILL.md`.
 
 | Skill         | Use                                                                                                                                                        |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ste-writing` | Rewrite engineering prose (journal entries, docs, PR text, comments) into STE. Mandated for journal entries and for new or edited text in root-level docs. |
+| `ste-writing` | Rewrite engineering prose (journal entries, docs, PR text, comments) into STE. Mandated for journal entries and for new or edited text in `docs/` and root-level docs. |
 
 ## Docs lifecycle
 
-Docs are leaves, not sources of truth. The code and the decisions are the
-sources. Rewrite a doc that drifts from its sources.
+Decisions are the source. They live in `journals/` as immutable entries.
+Code and docs derive from them. When a doc or the code disagrees with an
+entry, the entry wins: fix the derived artifact, or supersede the entry
+with a new one. Authored docs in `docs/` derive from journal entries;
+generated reference docs derive from the tool that builds them. The
+repo-root `README.md` links to `docs/index.md`, the start-here that
+links every topic doc. For the doc model and authoring contract, read
+`docs/README.md`.
 
 ## Where truth lives
 
 | Topic             | Source               |
 | ----------------- | -------------------- |
 | Planning contract | `journals/README.md` |
+| Decisions | `journals/` entries |
+| Doc artifacts | `docs/` (derived; see `docs/README.md`) |

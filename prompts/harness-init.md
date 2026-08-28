@@ -10,6 +10,9 @@ The base layer always installs:
 - `journals/README.md` — the planning contract (layout, status grammar,
   workflow, entry format).
 - `AGENTS.md` — the entry point that makes AI harnesses follow the contract.
+- `docs/README.md` — the docs authoring contract.
+- `docs/index.md` — the docs entrypoint stub.
+- The repo-root `README.md` links to `docs/index.md`.
 - `.agents/` scratch (gitignored) and `.gitignore` coverage.
 - `skills/ste-writing/` — copied from the harness tree.
 
@@ -50,7 +53,9 @@ Gather these facts in one pass before writing anything:
 - Do `AGENTS.md` or `CLAUDE.md` exist? If yes, do they define a planning or
   journaling workflow?
 - Does `.gitignore` exist? Does it cover `.agents/` and `**/.pi-subagents/*`?
-- Is there a docs directory? Check `docs/`, `doc/`, `Assets/Docs/`.
+- Is there a docs directory? Check `docs/`, `doc/`, `Assets/Docs/`. If
+  `docs/` exists, do `docs/README.md` and `docs/index.md` already exist?
+- Does the repo-root `README.md` exist? Does it link to `docs/index.md`?
 - Does `skills/` exist? Does `skills/ste-writing` exist?
 - Did the invocation already decide jtbd-coach (explicit include or exclude)?
   Does `skills/jtbd-coach` exist in the target?
@@ -77,6 +82,13 @@ Stop and ask before writing anything if:
    steps.
 4. `skills/ste-writing` or `skills/jtbd-coach` already exists — ask whether to
    keep or replace it.
+5. `docs/` exists with a `README.md` or any topic doc — a docs convention may
+   already be installed, or the repo carries its own docs semantics. Fold the
+   `docs/index.md` handling into this stop: for an existing `docs/`,
+   `docs/index.md` is deferred (the user reconciles it later) or filled (the
+   user populates it from existing docs). Default: defer. The contract
+   `docs/README.md` still installs unless a `docs/README.md` with content
+   already exists — then ask whether to keep or replace it.
 
 ### jtbd-coach gate
 
@@ -125,10 +137,7 @@ in the same turn. The invocation is the confirmation. Do not wait for another.
 ### 3.1 Write `journals/README.md`
 
 Copy `templates/journals-README.md` from the harness tree to
-`journals/README.md`. If the probe found a docs directory, add one row to the
-_Where things go_ table:
-`|`<docs-dir>/`| Stable context that entries
-reference | yes |`.
+`journals/README.md`.
 
 ### 3.2 Write or merge `AGENTS.md`
 
@@ -136,15 +145,34 @@ If no `AGENTS.md` exists, copy `templates/AGENTS.md` from the harness tree to
 `AGENTS.md`. If one exists without a planning workflow (no stop condition),
 merge the _Planning workflow_, _Session rhythm_, _Confirm before acting_, _Docs
 lifecycle_, and _Skills_ sections from the template into it and leave everything
-else untouched. Report what you inserted.
+else untouched. In the _Where truth lives_ table, append the _Decisions_ and
+_Doc artifacts_ rows when they are missing. Report what you inserted.
 
-Fill _Where truth lives_ from the probe — include only rows that point at files
+Fill _Where truth lives_ from the probe — append only rows that point at files
 you verified to exist. Candidates: `CONTRIBUTING.md` (git flow, tests), an
-architecture or conventions doc, CI config, the docs directory. Keep at least
-the planning-contract row.
+architecture or conventions doc, CI config. The base template already carries
+the planning-contract, decisions, and doc-artifacts rows.
 
 Fill _Project specifics_ with verified build and test commands only — one line
 each. If you verified none, omit the section.
+
+### 3.2b Write the docs convention
+
+1. Copy `templates/docs-README.md` from the harness tree to
+   `docs/README.md`. If `docs/README.md` already exists with content,
+   stop-ask (keep or replace) per the Phase 2 stop condition — do not
+   overwrite.
+2. Copy `templates/docs-index.md` to `docs/index.md`, filling `<repo>`
+   with the target's directory basename. Skip this step when the Phase 2
+   stop deferred `docs/index.md` for an existing `docs/` — note it for
+   manual reconciliation.
+3. Ensure the repo-root `README.md` links to `docs/index.md`. If
+   `README.md` exists without the link, append one line:
+   `See [docs/index.md](./docs/index.md) for what you need to know.`
+   If `README.md` does not exist, create a minimal stub: the repo
+   directory basename as H1, then the pointer line. If `README.md`
+   exists with rich content and no link, append the line at the end — do
+   not rewrite.
 
 ### 3.3 Git hygiene
 
@@ -235,10 +263,11 @@ Write `journals/harness/00-harness-install.md` now, after the work. Use the
 entry format from the README you just wrote. `Status: Executed.` — bare, no date
 in the status line. Fill every section from the probe and the install that just
 ran. Adjust the gap rows to what the probe actually found. Drop the _Decisions_
-section unless a real choice was made (merge versus create, a fallback taken,
-the jtbd-coach gate ran, or the godot-project gate ran — opted in, declined, or
-kept a pre-existing copy). The execution log names what landed, any fallbacks,
-and the verification results.
+section unless a real choice was made: merge versus create, a fallback taken,
+the docs-convention stop (deferred or filled `docs/index.md`, kept or replaced
+a pre-existing `docs/README.md`), the jtbd-coach gate, or the godot-project
+gate (opted in, declined, or kept a pre-existing copy). The execution log names
+what landed, any fallbacks, and the verification results.
 
 When the godot-project module ran, record:
 
@@ -259,6 +288,15 @@ Check, then report:
   gate.
 - `.gitignore` covers both patterns. `.agents/.gitkeep` exists.
 - `skills/ste-writing/SKILL.md` exists.
+- `docs/README.md` exists and carries the authoring contract.
+- `docs/index.md` exists as the empty stub, or is deferred with a noted
+  reason for an existing `docs/`.
+- The repo-root `README.md` links to `docs/index.md`.
+- `AGENTS.md` §Docs lifecycle names decisions as the source and states the
+  `README.md` → `docs/index.md` layering.
+- `## Where truth lives` carries the `Decisions` and `Doc artifacts` rows.
+- The `ste-writing` mandate reaches `docs/`.
+- `journals/README.md` §Where things go has the `docs/` row.
 - If jtbd-coach was opted in: `skills/jtbd-coach/SKILL.md` exists and the
   AGENTS.md Skills table carries its row. If not: neither exists.
 - `journals/harness/00-harness-install.md` exists with `Status: Executed.` and a

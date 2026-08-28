@@ -19,6 +19,7 @@ Materializing a plan turns it into a journal entry.
 | Path | Holds | Committed |
 |---|---|---|
 | `journals/` | Materialized plans — the decision trail | yes |
+| `docs/` | Derived doc artifacts — design specs, reference | yes |
 | `.agents/` | Mid-session scratch — working plans, handoffs, digests | no |
 | `.pi-subagents/` | Subagent output (auto-written) | no |
 
