@@ -27,9 +27,11 @@ Opt-in layer. The installer asks before any of these land:
 
 Record the install at:
 
-- `journals/harness/00-harness-install.md` — written after the work with
+- `journals/<area>/<NN>-harness-install.md` — written after the work with
   `Status: Executed.` Records base + applied modules + the godot-module decision
-  (opted in, declined, or deps missing).
+  (opted in, declined, or deps missing). The area is the target's choice —
+  see the Phase 2 record-area gate. A new area starts at `00`. An existing
+  area takes its next free number.
 
 The manifests the installer reads to apply each module live alongside the
 module's files in the harness tree — for the godot-project module, see
@@ -39,7 +41,7 @@ module's files in the harness tree — for the godot-project module, see
 
 The user's invocation of the installer is the explicit instruction to execute
 the install. The no-same-session-execution gate does not block this install. The
-`00` entry is written after the work as a record, not before it as a plan. The
+record entry is written after the work as a record, not before it as a plan. The
 invocation authorizes the install and nothing else — no code changes, no
 commits, no other files.
 
@@ -56,6 +58,8 @@ Gather these facts in one pass before writing anything:
   (A convention may already be installed — Phase 2 stop conditions already
   govern this. The probe fact is for the footer fill.)
 - The `journals/` area directories, for map scaffolding.
+- Any prior harness install or reconcile entry, with its path. The
+  record-area gate drafts its default from it.
 - Do `AGENTS.md` or `CLAUDE.md` exist? If yes, do they define a planning or
   journaling workflow?
 - Nested `AGENTS.md` files anywhere in the tree? List them.
@@ -135,6 +139,21 @@ Install the missing toolchain now, or proceed without the regen?
 Both answers apply the module. The regen runs only when the toolchain sits on
 `PATH`. If the regen cannot run, Phase 3.6 records a deps-missing fallback and
 continues with the files-only install.
+
+### Record-area gate
+
+The install record lands under a journal area the target owns, not a fixed
+one. At this confirm point ask one bounded question, unless the invocation
+already decided it:
+
+Record the install under which journal area? Default: <draft>.
+
+The draft rule: the area of a prior harness install or reconcile entry when
+one exists, else `meta`. The answer names an area, one path component — not a
+line. An unclear answer takes the default. Carry the choice to Phase 4. A new
+area starts at `00`. An existing area takes its next free number.
+
+If a stop condition above holds, fold this question into that stop.
 
 If no stop condition holds, state the file list in one short block and proceed
 in the same turn. The invocation is the confirmation. Do not wait for another.
@@ -281,15 +300,17 @@ insert after the `## Skills` anchor — same as for jtbd-coach in 3.5.
 
 ## Phase 4 — Record
 
-Write `journals/harness/00-harness-install.md` now, after the work. Use the
-entry format from the README you just wrote. `Status: Executed.` — bare, no date
-in the status line. Fill every section from the probe and the install that just
-ran. Adjust the gap rows to what the probe actually found. Drop the _Decisions_
-section unless a real choice was made: merge versus create, a fallback taken,
-the docs-convention stop (deferred or filled `docs/index.md`, kept or replaced
-a pre-existing `docs/README.md`), the jtbd-coach gate, or the godot-project
-gate (opted in, declined, or kept a pre-existing copy). The execution log names
-what landed, any fallbacks, and the verification results.
+Write `journals/<area>/<NN>-harness-install.md` now, after the work. Use the
+area and the number the Phase 2 record-area gate chose. Use the entry format
+from the README you just wrote. `Status: Executed.` — bare, no date in the
+status line. Fill every section from the probe and the install that just ran.
+Adjust the gap rows to what the probe actually found. Drop the _Decisions_
+section unless a real choice was made: the record-area choice, merge versus
+create, a fallback taken, the docs-convention stop (deferred or filled
+`docs/index.md`, kept or replaced a pre-existing `docs/README.md`), the
+jtbd-coach gate, or the godot-project gate (opted in, declined, or kept a
+pre-existing copy). The execution log names what landed, any fallbacks, and
+the verification results.
 
 Also record the schema adoption date from step 3.1 and the _Repository map_
 scaffold outcome from step 3.2: accepted, amended, or deferred empty.
@@ -330,8 +351,8 @@ Check, then report:
   pre-existing corpus are notes.
 - If jtbd-coach was opted in: `skills/jtbd-coach/SKILL.md` exists and the
   AGENTS.md Skills table carries its row. If not: neither exists.
-- `journals/harness/00-harness-install.md` exists with `Status: Executed.` and a
-  filled execution log.
+- `journals/<area>/<NN>-harness-install.md` exists with `Status: Executed.` and
+  a filled execution log, under the area the record-area gate chose.
 - If the godot-project module ran:
   - `AGENTS.md` carries the `## Godot 4 conventions` section.
   - `AGENTS.md` carries the `## Project context` section.

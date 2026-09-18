@@ -60,10 +60,14 @@ generated maps, no CI gates. The measured basis lives in
    `uv run`. Requires `godot` and `uv` on `PATH`.
 8. Add `.agents/` and `**/.pi-subagents/*` to `.gitignore`. Create
    `.agents/.gitkeep`.
-9. Record the install as `journals/harness/00-harness-install.md` with
-   `Status: Executed.`
+9. Record the install as `journals/<area>/<NN>-harness-install.md` with
+   `Status: Executed.` The area is the repo's choice. Default: `meta`. When a
+   prior harness install or reconcile entry exists, draft its area. A new area
+   starts at `00`; an existing area takes its next free number.
 
 Existing installs upgrade via `prompts/harness-reconcile.md`.
+
+See [docs/index.md](./docs/index.md) for what you need to know.
 
 ## Versioning
 

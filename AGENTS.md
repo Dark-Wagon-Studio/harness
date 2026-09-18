@@ -66,6 +66,12 @@ skill maintains it: the skill proposes diffs, a human accepts.
 
 | Area | Holds |
 | --- | --- |
+| `templates/` | Install-time sources: the contracts a target commits (entry point, planning contract, docs contract, nested stub) |
+| `skills/` | Canonical homes of the skills: ste-writing, journal-craft, orientation, jtbd-coach |
+| `modules/` | Opt-in install modules with their own manifests (godot-project) |
+| `prompts/` | The installer and reconcile instructions an agent runs against a target |
+| `journals/` | Harness's own decision trail: the planning contract and the context area |
+| `docs/` | Derived doc artifacts for harness itself |
 
 ### Vocabulary bridge
 
@@ -73,6 +79,12 @@ Inbound direction: what a person asks, what the record calls it.
 
 | You might say | The record says |
 | --- | --- |
+| harness tree, target | The clone an installer reads, versus the repo it writes into |
+| base layer | What every install commits: the contracts plus the mandated skills |
+| opt-in module | An installable unit under `modules/`, gated at install |
+| reconcile | The upgrade pass for a target with an older base layer |
+| lint | Advisory check, run by hand. Never generates, never gates |
+| record area | The journal area holding the install or reconcile record. Default: meta |
 
 ### Resolving authority
 

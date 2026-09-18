@@ -12,6 +12,8 @@ Repository map. The invocation authorizes this reconcile and nothing else.
 - `AGENTS.md`: Repository map section? Skills table rows?
 - `skills/`: which of ste-writing, journal-craft, orientation exist?
 - Nested `AGENTS.md` files? `docs/` present with a README?
+- The location of any prior harness install or reconcile entry, for the
+  record area.
 
 ## Steps
 
@@ -28,8 +30,12 @@ Repository map. The invocation authorizes this reconcile and nothing else.
    missing.
 5. Run both lints from the repo root. Legacy findings are notes. Fix only
    findings on files this reconcile touched.
-6. Record `journals/harness/NN-harness-reconcile.md` with `Status: Executed.`,
-   naming what landed and the adoption date.
+6. Record the reconcile under the area of the prior harness install or
+   reconcile entry. Ask one bounded question only when no prior entry exists:
+   record under which journal area? Default: `meta`. The entry is
+   `journals/<area>/<NN>-harness-reconcile.md` with `Status: Executed.`,
+   naming what landed, the adoption date, and the record-area choice. `NN`
+   is the next free number in that area.
 
 ## Limits
 
