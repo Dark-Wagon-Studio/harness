@@ -15,6 +15,8 @@ The base layer always installs:
 - The repo-root `README.md` links to `docs/index.md`.
 - `.agents/` scratch (gitignored) and `.gitignore` coverage.
 - `skills/ste-writing/` — copied from the harness tree.
+- `skills/journal-craft/` — copied from the harness tree.
+- `skills/orientation/` — copied from the harness tree.
 
 Opt-in layer. The installer asks before any of these land:
 
@@ -50,8 +52,13 @@ Gather these facts in one pass before writing anything:
 
 - Is this a git work tree? (`git rev-parse --is-inside-work-tree`)
 - Does `journals/` exist?
+- Does `journals/README.md` carry a `Schema:` footer or a `Modifiers:` line?
+  (A convention may already be installed — Phase 2 stop conditions already
+  govern this. The probe fact is for the footer fill.)
+- The `journals/` area directories, for map scaffolding.
 - Do `AGENTS.md` or `CLAUDE.md` exist? If yes, do they define a planning or
   journaling workflow?
+- Nested `AGENTS.md` files anywhere in the tree? List them.
 - Does `.gitignore` exist? Does it cover `.agents/` and `**/.pi-subagents/*`?
 - Is there a docs directory? Check `docs/`, `doc/`, `Assets/Docs/`. If
   `docs/` exists, do `docs/README.md` and `docs/index.md` already exist?
@@ -66,7 +73,7 @@ Gather these facts in one pass before writing anything:
   existing `[project]` block).
 - Are `godot` and `uv` on `PATH`? (`command -v godot`, `command -v uv`.)
 - Does `docs/godot-api/` already exist?
-- Build and test facts for the _Project specifics_ section: `Makefile`,
+- Build and test facts for the _Where truth lives_ fill: `Makefile`,
   `package.json` scripts, CI config (`.github/workflows/`, `.gitlab-ci.yml`),
   README build instructions. Only record what you verify.
 - Today's date.
@@ -137,15 +144,16 @@ in the same turn. The invocation is the confirmation. Do not wait for another.
 ### 3.1 Write `journals/README.md`
 
 Copy `templates/journals-README.md` from the harness tree to
-`journals/README.md`.
+`journals/README.md`. Fill the footer placeholder `<YYYY-MM-DD>` with
+today's date. The adoption date grandfathers any pre-existing corpus.
 
 ### 3.2 Write or merge `AGENTS.md`
 
 If no `AGENTS.md` exists, copy `templates/AGENTS.md` from the harness tree to
 `AGENTS.md`. If one exists without a planning workflow (no stop condition),
 merge the _Planning workflow_, _Session rhythm_, _Confirm before acting_, _Docs
-lifecycle_, and _Skills_ sections from the template into it and leave everything
-else untouched. In the _Where truth lives_ table, append the _Decisions_ and
+lifecycle_, _Skills_, and _Repository map_ sections from the template into it
+and leave everything else untouched. In the _Where truth lives_ table, append the _Decisions_ and
 _Doc artifacts_ rows when they are missing. Report what you inserted.
 
 Fill _Where truth lives_ from the probe — append only rows that point at files
@@ -153,8 +161,10 @@ you verified to exist. Candidates: `CONTRIBUTING.md` (git flow, tests), an
 architecture or conventions doc, CI config. The base template already carries
 the planning-contract, decisions, and doc-artifacts rows.
 
-Fill _Project specifics_ with verified build and test commands only — one line
-each. If you verified none, omit the section.
+Draft _Repository map_ zone rows from the probed `journals/` areas — an empty
+corpus yields empty tables, which are legal. Propose the scaffold in-session.
+The user accepts, amends, or defers the tables. The vocabulary bridge starts
+empty. The _Where truth lives_ fill from the probe stays as written.
 
 ### 3.2b Write the docs convention
 
@@ -185,6 +195,18 @@ Copy `skills/ste-writing/` from the harness tree into `skills/ste-writing/`. If
 `skills/` already holds other skills, leave them alone. If the skill is missing
 from the harness tree, report it and continue — the README _Style_ section
 already carries the by-hand rule.
+
+### 3.4b Install the journal-craft skill
+
+Copy `skills/journal-craft/` from the harness tree into
+`skills/journal-craft/`. If the skill is missing from the harness tree, report
+it and continue — mirror the 3.4 fallback.
+
+### 3.4c Install the orientation skill
+
+Copy `skills/orientation/` from the harness tree into `skills/orientation/`.
+If the skill is missing from the harness tree, report it and continue — mirror
+the 3.4 fallback.
 
 ### 3.5 Install jtbd-coach (opt-in only)
 
@@ -269,6 +291,9 @@ a pre-existing `docs/README.md`), the jtbd-coach gate, or the godot-project
 gate (opted in, declined, or kept a pre-existing copy). The execution log names
 what landed, any fallbacks, and the verification results.
 
+Also record the schema adoption date from step 3.1 and the _Repository map_
+scaffold outcome from step 3.2: accepted, amended, or deferred empty.
+
 When the godot-project module ran, record:
 
 - The gate decision (opted in, declined, deps missing).
@@ -297,6 +322,12 @@ Check, then report:
 - `## Where truth lives` carries the `Decisions` and `Doc artifacts` rows.
 - The `ste-writing` mandate reaches `docs/`.
 - `journals/README.md` §Where things go has the `docs/` row.
+- `journals/README.md` carries the schema footer with the install date.
+- `skills/journal-craft/SKILL.md` and `skills/orientation/SKILL.md` exist.
+- `AGENTS.md` carries a `## Repository map` section. Empty tables are legal
+  at install.
+- Both lints run from the repo root. Expect zero errors. Legacy findings on a
+  pre-existing corpus are notes.
 - If jtbd-coach was opted in: `skills/jtbd-coach/SKILL.md` exists and the
   AGENTS.md Skills table carries its row. If not: neither exists.
 - `journals/harness/00-harness-install.md` exists with `Status: Executed.` and a
@@ -316,3 +347,5 @@ Check, then report:
 Do not commit. Present the summary: files created, files merged, fallbacks
 taken, the godot-module decision and regen outcome, and anything the user should
 decide (for example, a `CLAUDE.md` that now needs a pointer to `AGENTS.md`).
+Mention `templates/AGENTS-nested.md` in the final summary as available for
+subtrees. Do not install it unless the user asks.

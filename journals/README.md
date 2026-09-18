@@ -155,7 +155,7 @@ installed, apply that rule by hand.
 
 This contract carries a schema version. The footer below states it.
 
-Schema: 1. Adopted: <YYYY-MM-DD>.
+Schema: 1. Adopted: 2026-09-18.
 
 The installer fills the adoption date. Entries dated before the adoption
 date are legacy. The lint reports legacy findings as notes. No one rewrites
