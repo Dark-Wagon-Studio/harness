@@ -45,7 +45,7 @@ generated maps, no CI gates. The measured basis lives in
    to `docs/index.md`.
 4. Copy `skills/ste-writing/` to `skills/ste-writing/`.
 5. Copy `skills/journal-craft/` to `skills/journal-craft/` and
-   `skills/orientation/` to `skills/orientation/`. Fill the schema footer
+   `skills/orientation/` to `skills/orientation/`. Fill the schema ledger
    date in `journals/README.md` with today's date, and scaffold the
    Repository map in `AGENTS.md` from the `journals/` tree.
 6. Optionally copy `skills/jtbd-coach/` to `skills/jtbd-coach/` and add
@@ -72,6 +72,9 @@ See [docs/index.md](./docs/index.md) for what you need to know.
 ## Versioning
 
 Not versioned as a product. Installs track `main`. One exception: the
-journal entry schema carries an integer, stated in each repo's
-`journals/README.md` footer (`Schema: 1`). The lints embed the highest
-schema they understand and report when they meet a newer one.
+journal entry schema carries an integer. An entry states its own schema on
+a `Schema: <N>.` line. Entries written before schema 2 carry no line and
+resolve through the ledger in `journals/README.md`, which holds one
+`Schema: <N>. Adopted: <date>.` line per adopted schema and only ever
+grows. The lints embed the highest schema they understand, keep checking
+older ones, and report when they meet a newer one.

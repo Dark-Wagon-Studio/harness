@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""journal-lint.py — advisory lint for journal entries under schema 1.
+"""journal-lint.py — advisory lint for journal entries under schema 2.
 
 Linter law: this tool reports claims that do not resolve. It never writes
 files, generates content, scores, ranks, or gates. Findings print one per
@@ -13,11 +13,21 @@ Usage (from the repo root):
     python3 skills/journal-craft/journal-lint.py
 
 Inputs: the `journals/` tree and `journals/README.md`. The README carries the
-schema footer (`Schema: N. Adopted: <date>.`) and the optional `Modifiers:`
-line. A footer declaring a schema newer than SCHEMA_VERSION prints a notice
-and exits 2 without running the checks. Entries dated before the adoption
-date are legacy: every check still runs, but each finding on a legacy entry
-is a note, never an error. Without an adoption date nothing is legacy.
+schema ledger (one `Schema: N. Adopted: <date>.` line per adopted schema,
+ascending) and the optional `Modifiers:` line.
+
+An entry resolves to a schema in three steps: its own `Schema: <N>.` line
+when it carries one, otherwise the ledger line with the latest adoption date
+on or before the entry date, otherwise legacy. Every check still runs on a
+legacy entry, but each finding on it is a note, never an error. Without a
+ledger nothing is legacy.
+
+SCHEMA_MAX is the highest schema this lint understands, not the only one. A
+schema-1 repo stays fully checked. A ledger above SCHEMA_MAX prints a notice
+and exits 2 without running the checks, because no resolution would be
+trustworthy. A single entry above SCHEMA_MAX produces one note and no other
+finding: the entry skips every check, including the J01 numbering checks that
+run outside lint_entry. The run continues and the entry never fails it.
 
 Checks:
   J01  filenames (<NN>-<slug>.md, two digits), lowest number is 00 per
@@ -35,8 +45,14 @@ Checks:
        three path components under journals/)
   J07  dates are ISO 8601 everywhere they appear (the Date line itself is
        J04's; J07 skips it)
-  J08  journals/README.md carries the "Schema: N. Adopted: <date>." footer
-       with a valid date
+  J08  journals/README.md carries the schema ledger: at least one
+       "Schema: N. Adopted: <date>." line, each with a valid date, versions
+       and dates both ascending, no version repeated
+  J09  the entry's "Schema: <N>." declaration: it parses, it is declared
+       once, its version is 1 or higher, it sits on the line directly after
+       the Date line, it does not exceed the highest adopted version, and it
+       is present on every entry that resolves to schema 2 or higher. A
+       declaration above SCHEMA_MAX is a note and skips the entry
 
 Deterministic: two runs on the same tree print identical output. Python 3
 standard library only; no network.
@@ -47,7 +63,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_MAX = 2
 
 PRIMARY_STATES = ("Materialized", "Decided", "Executed")
 BASE_MODIFIERS = ("Provisional", "On hold")
@@ -62,6 +78,8 @@ DATE_LINE_RE = re.compile(
     r"^Date:\s*(\d{4}-\d{2}-\d{2})\s*\.\s*Depends on:\s*(.*?)\s*\.\s*$")
 FOOTER_RE = re.compile(
     r"^\s*Schema:\s*(\d+)\s*\.\s*Adopted:\s*(\d{4}-\d{2}-\d{2})\s*\.\s*$")
+# An entry's own declaration. No "Adopted:" part: that belongs to the ledger.
+ENTRY_SCHEMA_RE = re.compile(r"^Schema:\s*(\d+)\s*\.\s*$")
 # Anchored at column zero: an indented Modifiers line in journals/README.md
 # is a documentation example, not a declaration.
 MODIFIERS_LINE_RE = re.compile(r"^Modifiers:\s*(.*?)\s*\.?\s*$")
@@ -123,72 +141,150 @@ def discover_entries(journals):
 def lint_readme(readme):
     """Parse journals/README.md.
 
-    Returns (findings, declared_modifiers, adopted_iso, notice). The notice
-    is set only when the footer declares a schema newer than SCHEMA_VERSION.
+    Returns (findings, declared_modifiers, ledger, notice). The ledger holds
+    one (version, date, iso, lineno) tuple per adopted schema, in file order.
+    The notice is set only when the ledger's highest version is newer than
+    SCHEMA_MAX.
     """
     findings = []
     declared = []
-    adopted_iso = None
+    ledger = []
     notice = None
+
+    def j08(lineno, msg):
+        findings.append({"path": "journals/README.md", "line": lineno,
+                         "code": "J08", "cls": "error", "msg": msg})
+
     if not readme.is_file():
-        findings.append({
-            "path": "journals/README.md", "line": 0, "code": "J08",
-            "cls": "error",
-            "msg": 'journals/README.md not found: no schema footer '
-                   '("Schema: N. Adopted: YYYY-MM-DD."), adoption date, or '
-                   "declared modifiers",
-        })
-        return findings, declared, adopted_iso, notice
+        j08(0, "journals/README.md not found: no schema ledger "
+               '("Schema: N. Adopted: YYYY-MM-DD."), adoption date, or '
+               "declared modifiers")
+        return findings, declared, ledger, notice
     try:
         text = readme.read_text(encoding="utf-8")
     except OSError:
-        findings.append({
-            "path": "journals/README.md", "line": 0, "code": "J08",
-            "cls": "error",
-            "msg": "journals/README.md cannot be read; schema footer and "
-                   "declared modifiers unchecked",
-        })
-        return findings, declared, adopted_iso, notice
+        j08(0, "journals/README.md cannot be read; schema ledger and "
+               "declared modifiers unchecked")
+        return findings, declared, ledger, notice
+
+    raw = []
     for lineno, line in enumerate(text.splitlines(), 1):
         fm = FOOTER_RE.match(line)
-        if fm and adopted_iso is None and notice is None:
-            version = int(fm.group(1))
-            adopted_iso = fm.group(2)
-            if version > SCHEMA_VERSION:
-                notice = (
-                    f"notice: journals/README.md:{lineno} declares schema "
-                    f"{version}, adopted {adopted_iso}; this lint understands "
-                    f"schema {SCHEMA_VERSION}")
-                continue
-            if iso_date(adopted_iso) is None:
-                findings.append({
-                    "path": "journals/README.md", "line": lineno, "code": "J08",
-                    "cls": "error",
-                    "msg": f"schema footer adoption date is not a valid ISO 8601 "
-                           f"date: {adopted_iso}",
-                })
+        if fm:
+            raw.append((int(fm.group(1)), fm.group(2), lineno))
         mm = MODIFIERS_LINE_RE.match(line)
         if mm:
             for name in mm.group(1).split(","):
                 name = name.strip()
                 if name and name not in declared:
                     declared.append(name)
-    if adopted_iso is None and notice is None:
-        findings.append({
-            "path": "journals/README.md", "line": 0, "code": "J08",
-            "cls": "error",
-            "msg": 'schema footer missing or malformed (expected '
-                   '"Schema: N. Adopted: YYYY-MM-DD.")',
-        })
-    return findings, declared, adopted_iso, notice
+
+    if not raw:
+        j08(0, 'schema ledger missing or malformed (expected at least one '
+               '"Schema: N. Adopted: YYYY-MM-DD." line)')
+        return findings, declared, ledger, notice
+
+    # A ledger this lint cannot read makes every resolution untrustworthy, so
+    # the whole run stops. One entry above SCHEMA_MAX is a note on that entry.
+    highest = max(v for v, _iso, _ln in raw)
+    if highest > SCHEMA_MAX:
+        lineno = next(ln for v, _iso, ln in raw if v == highest)
+        notice = (f"notice: journals/README.md:{lineno} declares schema "
+                  f"{highest}; this lint understands schema {SCHEMA_MAX}")
+        return findings, declared, ledger, notice
+
+    prev = None
+    for version, iso, lineno in raw:
+        adopted = iso_date(iso)
+        if adopted is None:
+            j08(lineno, f"schema ledger adoption date is not a valid ISO 8601 "
+                        f"date: {iso}")
+            continue
+        if prev is not None:
+            prev_version, prev_date = prev
+            if version == prev_version:
+                j08(lineno, f"schema ledger repeats schema {version}")
+            elif version < prev_version:
+                j08(lineno, f"schema ledger versions do not ascend: "
+                            f"{version} follows {prev_version}")
+            if adopted <= prev_date:
+                j08(lineno, f"schema ledger dates do not ascend: {iso} is not "
+                            f"after {prev_date.isoformat()}")
+        ledger.append((version, adopted, iso, lineno))
+        prev = (version, adopted)
+    return findings, declared, ledger, notice
 
 
-def lint_entry(p, rel, adopted, declared, index):
-    """Lint one entry file. Returns (findings, legacy)."""
+def read_entry_schema(lines):
+    """Read an entry's "Schema: <N>." declaration from its front matter.
+
+    The front matter is the block of lines after the heading, and it ends at
+    the first "## " heading or at the blank line that closes the block,
+    whichever comes first. An entry with no section heading therefore cannot
+    drag prose into the scan. Returns (lineno, version, findings). The
+    findings are (code, lineno, msg) tuples the caller emits once it knows
+    whether the entry is legacy.
+    """
+    found = []
+    in_block = False
+    for i, line in enumerate(lines):
+        if SECTION_HEADING_RE.match(line):
+            break
+        if i > 0 and line.strip():
+            in_block = True
+        elif in_block and not line.strip():
+            break
+        if line.startswith("Schema:"):
+            found.append((i + 1, line))
+    if not found:
+        return None, None, []
+    findings = [("J09", lineno, "entry declares its schema more than once")
+                for lineno, _line in found[1:]]
+    lineno, line = found[0]
+    m = ENTRY_SCHEMA_RE.match(line)
+    if not m:
+        findings.append(("J09", lineno,
+                         'schema line does not parse as "Schema: <N>.": '
+                         f"{excerpt(line)}"))
+        return lineno, None, findings
+    version = int(m.group(1))
+    if version < 1:
+        findings.append(("J09", lineno,
+                         f"schema version must be 1 or higher: {version}"))
+        return lineno, None, findings
+    return lineno, version, findings
+
+
+def resolve_schema(ledger, entry_date, entry_schema):
+    """Resolve one entry to a schema. Returns (schema, legacy).
+
+    Three steps: the entry's own declaration, then the ledger line with the
+    latest adoption date on or before the entry date, then legacy. An
+    undated entry and an empty ledger both resolve to (None, False): J04 and
+    J08 already report those, and nothing is grandfathered on a guess.
+    """
+    if entry_schema is not None:
+        return entry_schema, False
+    if not ledger or entry_date is None:
+        return None, False
+    applicable = [v for v, adopted, _iso, _ln in ledger if adopted <= entry_date]
+    if applicable:
+        return max(applicable), False
+    return None, True
+
+
+def lint_entry(p, rel, ledger, declared, index):
+    """Lint one entry file. Returns (findings, legacy, skipped).
+
+    "skipped" is True when the entry declares a schema above SCHEMA_MAX. The
+    caller must then suppress its J01 findings too: this lint cannot judge an
+    entry written to a schema it does not know.
+    """
     rel_dir_parts = rel.parts[:-1]
     rel_dir = "/".join(rel_dir_parts)
     findings = []
     legacy = False
+    skipped = False
 
     def add(code, line, msg, cls="error"):
         if cls == "error" and legacy:
@@ -200,11 +296,25 @@ def lint_entry(p, rel, adopted, declared, index):
         text = p.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         add("J02", 1, "entry file is not valid UTF-8; heading unreadable")
-        return findings, legacy
+        return findings, legacy, False
     except OSError:
         add("J02", 1, "entry file cannot be read; checks skipped")
-        return findings, legacy
+        return findings, legacy, False
     lines = text.splitlines()
+
+    # J09 (part 1) — read the declaration before every other check. A
+    # declaration above SCHEMA_MAX means this lint cannot judge the entry, so
+    # it reports one note and leaves the entry alone.
+    schema_lineno, entry_schema, schema_findings = read_entry_schema(lines)
+    if entry_schema is not None and entry_schema > SCHEMA_MAX:
+        findings.append({
+            "path": p.as_posix(), "line": schema_lineno, "code": "J09",
+            "cls": "note",
+            "msg": f"entry declares schema {entry_schema}; this lint "
+                   f"understands schema {SCHEMA_MAX}; remaining checks "
+                   f"skipped",
+        })
+        return findings, legacy, True
 
     # J04 (part 1) — locate and parse the date line first: the entry date
     # decides legacy status, which downgrades later findings to notes.
@@ -228,8 +338,30 @@ def lint_entry(p, rel, adopted, declared, index):
                 add("J04", date_lineno,
                     f"date is not a valid ISO 8601 date: {dm.group(1)}")
 
-    if adopted is not None and entry_date is not None and entry_date < adopted:
-        legacy = True
+    effective, legacy = resolve_schema(ledger, entry_date, entry_schema)
+
+    # J09 (part 2) — held until legacy is known, so a legacy entry reports
+    # notes like every other check.
+    for code, lineno, msg in schema_findings:
+        add(code, lineno, msg)
+    if entry_schema is not None and ledger:
+        highest = max(v for v, _a, _iso, _ln in ledger)
+        if entry_schema > highest:
+            add("J09", schema_lineno,
+                f"entry declares schema {entry_schema}; the ledger in "
+                f"journals/README.md adopts no schema above {highest}")
+    if schema_lineno is not None and date_lineno is not None \
+            and schema_lineno != date_lineno + 1:
+        add("J09", schema_lineno,
+            f"schema line must come directly after the Date line "
+            f"(line {date_lineno + 1}), found it on line {schema_lineno}")
+    # Gated on the line being absent, not on the version being unreadable: a
+    # line that fails to parse already has its own finding, and an entry that
+    # declares badly still declares.
+    if schema_lineno is None and effective is not None and effective >= 2:
+        add("J09", date_lineno or 1,
+            f"entry resolves to schema {effective} and must declare it "
+            f'("Schema: {effective}." after the Date line)')
 
     # J04 (part 2) — dependency targets.
     if date_line is not None:
@@ -376,11 +508,16 @@ def lint_entry(p, rel, adopted, declared, index):
             add("J07", i + 1,
                 f"date not in ISO 8601 (YYYY-MM-DD): {m.group(1)}")
 
-    return findings, legacy
+    return findings, legacy, skipped
 
 
-def lint_numbering(entries, legacy_by_path):
-    """J01 — filenames, lowest number 00 per directory, gap notes."""
+def lint_numbering(entries, legacy_by_path, skipped_paths):
+    """J01 — filenames, lowest number 00 per directory, gap notes.
+
+    An entry in skipped_paths declared a schema above SCHEMA_MAX. It keeps
+    its place in the number sequence, so a sibling never reports a false gap,
+    but it collects no finding of its own.
+    """
     findings = []
     dirs = {}
     for p, rel in entries:
@@ -390,6 +527,8 @@ def lint_numbering(entries, legacy_by_path):
         for p, rel in sorted(dirs[dir_parts], key=lambda t: t[0].name):
             fm = ENTRY_FILENAME_RE.match(p.name)
             if fm is None:
+                if p.as_posix() in skipped_paths:
+                    continue
                 cls = "note" if legacy_by_path.get(p.as_posix(), False) else "error"
                 findings.append({
                     "path": p.as_posix(), "line": 1, "code": "J01", "cls": cls,
@@ -401,7 +540,7 @@ def lint_numbering(entries, legacy_by_path):
             continue
         matches.sort(key=lambda t: t[0])
         lowest_n, lowest_p, lowest_s = matches[0]
-        if lowest_n != 0:
+        if lowest_n != 0 and lowest_p.as_posix() not in skipped_paths:
             cls = ("note"
                    if legacy_by_path.get(lowest_p.as_posix(), False) else "error")
             findings.append({
@@ -411,7 +550,7 @@ def lint_numbering(entries, legacy_by_path):
             })
         prev = None
         for n, p, nstr in matches:
-            if prev is not None and n > prev + 1:
+            if prev is not None and n > prev + 1 and p.as_posix() not in skipped_paths:
                 missing = ", ".join(f"{k:02d}" for k in range(prev + 1, n))
                 findings.append({
                     "path": p.as_posix(), "line": 1, "code": "J01", "cls": "note",
@@ -424,10 +563,9 @@ def lint_numbering(entries, legacy_by_path):
 
 def lint_repo(root):
     journals = root / "journals"
-    readme_findings, declared, adopted_iso, notice = lint_readme(journals / "README.md")
+    readme_findings, declared, ledger, notice = lint_readme(journals / "README.md")
     if notice is not None:
-        return readme_findings, adopted_iso, notice
-    adopted = iso_date(adopted_iso) if adopted_iso else None
+        return readme_findings, ledger, notice
     entries = discover_entries(journals)
     index = {}
     for p, rel in entries:
@@ -436,16 +574,19 @@ def lint_repo(root):
             index[("/".join(rel.parts[:-1]), fm.group(1))] = p
     findings = list(readme_findings)
     legacy_by_path = {}
+    skipped_paths = set()
     for p, rel in entries:
-        entry_findings, legacy = lint_entry(p, rel, adopted, declared, index)
+        entry_findings, legacy, skipped = lint_entry(p, rel, ledger, declared, index)
         legacy_by_path[p.as_posix()] = legacy
+        if skipped:
+            skipped_paths.add(p.as_posix())
         findings.extend(entry_findings)
-    findings.extend(lint_numbering(entries, legacy_by_path))
-    return findings, adopted_iso, notice
+    findings.extend(lint_numbering(entries, legacy_by_path, skipped_paths))
+    return findings, ledger, notice
 
 
 def main():
-    findings, adopted_iso, notice = lint_repo(Path.cwd())
+    findings, ledger, notice = lint_repo(Path.cwd())
     if notice is not None:
         print(notice)
         return 2
@@ -454,9 +595,14 @@ def main():
         print(f'{f["path"]}:{f["line"]} {f["cls"]:<5} {f["code"]} {f["msg"]}')
     errors = sum(1 for f in findings if f["cls"] == "error")
     notes = sum(1 for f in findings if f["cls"] == "note")
+    if ledger:
+        highest, _adopted, iso, _lineno = max(ledger, key=lambda t: t[0])
+        state = f"repo schema {highest}, adopted {iso}"
+    else:
+        state = "repo schema not found"
     print(f"summary: {errors} error{'' if errors == 1 else 's'}, "
           f"{notes} note{'' if notes == 1 else 's'} "
-          f"(schema {SCHEMA_VERSION}, adopted {adopted_iso or 'date not found'})")
+          f"({state}, lint understands schema {SCHEMA_MAX})")
     return 1 if errors else 0
 
 

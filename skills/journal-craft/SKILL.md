@@ -1,6 +1,6 @@
 ---
 name: journal-craft
-description: Write and check journal entries against schema 1 - qualified decision IDs, status grammar, dependency and supersession edges, grandfathering. Use when materializing a journal entry, editing one, checking entries with the lint, or citing a decision.
+description: Write and check journal entries against schema 2 - the entry schema line, qualified decision IDs, status grammar, dependency and supersession edges, schema resolution. Use when materializing a journal entry, editing one, checking entries with the lint, or citing a decision.
 ---
 
 # journal-craft
@@ -10,7 +10,7 @@ skill writes entries that comply and checks entries that exist. The check is a
 lint. It reports claims that do not resolve. It never rewrites, scores, or
 gates.
 
-## Writing rules (schema 1)
+## Writing rules (schema 2)
 
 - Filename: `<NN>-<slug>.md`. Numbering starts at `00` in each directory.
 - Front matter, in order:
@@ -21,6 +21,10 @@ gates.
      `Modifiers:` line in `journals/README.md`.
   3. `Date: <YYYY-MM-DD>. Depends on: <area>/<NN>, <area>/<NN>.` Use
      `Depends on: none.` when the entry stands alone.
+  4. `Schema: <N>.` The schema you write the entry under, on the line
+     directly after the `Date:` line. Read the highest adopted version from
+     the ledger in `journals/README.md`. A new entry carries this line before
+     it lands. An entry already in the record never gains one.
 - Decisions: number every item in `## Decisions` as
   `1. **D1 — short name.** The decision sentence.` Numbers run from 1 inside
   the entry. Drop the section when no cross-cutting choice needs recording.
@@ -30,11 +34,23 @@ gates.
 ## Checking
 
 Run `python3 skills/journal-craft/journal-lint.py` from the repo root before
-landing an entry. Fix every error. Notes on legacy entries (dated before the
-adoption date in `journals/README.md`) are information, not work.
+landing an entry. Fix every error. Notes on legacy entries are information,
+not work.
 
-## Grandfathering
+## Schema resolution
 
-`journals/README.md` closes with `Schema: 1. Adopted: <date>.` Entries dated
-before that day are legacy. The lint reports them as notes. Never rewrite a
-legacy entry to satisfy the schema.
+`journals/README.md` closes with a ledger, one line per adopted schema:
+
+    Schema: 1. Adopted: 2026-09-18.
+    Schema: 2. Adopted: 2026-09-20.
+
+An entry resolves to a schema in three steps. First, its own `Schema:` line,
+when it carries one. Second, the ledger line with the latest adoption date on
+or before the entry date. Third, legacy.
+
+The lint reports every finding on a legacy entry as a note. Never rewrite a
+legacy entry to satisfy the schema. Never add a `Schema:` line to an entry
+already in the record. The line records the schema the author wrote under.
+Adding one later would make the record claim something that did not happen.
+An entry you are drafting is not yet in the record: give it the line before
+you land it, whatever the lint said about the file on disk.

@@ -54,9 +54,14 @@ Gather these facts in one pass before writing anything:
 
 - Is this a git work tree? (`git rev-parse --is-inside-work-tree`)
 - Does `journals/` exist?
-- Does `journals/README.md` carry a `Schema:` footer or a `Modifiers:` line?
-  (A convention may already be installed — Phase 2 stop conditions already
-  govern this. The probe fact is for the footer fill.)
+- Does `journals/README.md` carry a `Schema:` ledger line or a `Modifiers:`
+  line? (A convention may already be installed — Phase 2 stop conditions
+  already govern this. Step 3.1 branches on this fact: it never copies the
+  template over a file that has either line.)
+- The last date in any `Schema:` ledger the file carries. Step 3.1 dates its
+  adoption after it.
+- The newest `Date:` among entries that carry no `Schema:` line. Step 3.1
+  dates its adoption after it too.
 - The `journals/` area directories, for map scaffolding.
 - Any prior harness install or reconcile entry, with its path. The
   record-area gate drafts its default from it.
@@ -162,9 +167,30 @@ in the same turn. The invocation is the confirmation. Do not wait for another.
 
 ### 3.1 Write `journals/README.md`
 
-Copy `templates/journals-README.md` from the harness tree to
-`journals/README.md`. Fill the footer placeholder `<YYYY-MM-DD>` with
-today's date. The adoption date grandfathers any pre-existing corpus.
+**Check the probe first.** When `journals/README.md` does not exist, copy
+`templates/journals-README.md` from the harness tree to `journals/README.md`
+and fill the ledger placeholder `<YYYY-MM-DD>` with the adoption date
+computed below.
+
+When `journals/README.md` already exists and the probe found a `Schema:`
+ledger line or a `Modifiers:` line in it, **do not copy the template over
+it.** Stop and route the user to `prompts/harness-reconcile.md`, which
+upgrades a file in place. A plain copy destroys both lines. Losing the ledger
+makes the entire existing corpus legacy, so every error-level finding on it
+silently becomes an advisory note and the lint starts exiting 0. Losing the
+`Modifiers:` line invalidates every status line that used a declared
+modifier. Both losses are invisible in the lint output.
+
+When `journals/README.md` exists with neither line, it predates the schema.
+Copy the template over it, and say in the final summary that you replaced a
+pre-schema contract file.
+
+The adoption date grandfathers any pre-existing corpus. Take the latest of
+three dates: today, one day after the newest entry that carries no `Schema:`
+line, and one day after the last date in any ledger the probe found. The
+second rule stops the date from landing on an entry already in the record,
+which would demand a `Schema:` line that nobody may add. The third keeps the
+ledger ascending, which the lint requires.
 
 ### 3.2 Write or merge `AGENTS.md`
 
@@ -302,8 +328,9 @@ insert after the `## Skills` anchor — same as for jtbd-coach in 3.5.
 
 Write `journals/<area>/<NN>-harness-install.md` now, after the work. Use the
 area and the number the Phase 2 record-area gate chose. Use the entry format
-from the README you just wrote. `Status: Executed.` — bare, no date in the
-status line. Fill every section from the probe and the install that just ran.
+from the README you just wrote, including the `Schema:` line. Read the
+version from the ledger in the README you just wrote. `Status: Executed.` —
+bare, no date in the status line. Fill every section from the probe and the install that just ran.
 Adjust the gap rows to what the probe actually found. Drop the _Decisions_
 section unless a real choice was made: the record-area choice, merge versus
 create, a fallback taken, the docs-convention stop (deferred or filled
@@ -312,8 +339,9 @@ jtbd-coach gate, or the godot-project gate (opted in, declined, or kept a
 pre-existing copy). The execution log names what landed, any fallbacks, and
 the verification results.
 
-Also record the schema adoption date from step 3.1 and the _Repository map_
-scaffold outcome from step 3.2: accepted, amended, or deferred empty.
+Also record the schema adoption date from step 3.1, why that date was
+chosen when it is not today, and the _Repository map_ scaffold outcome from
+step 3.2: accepted, amended, or deferred empty.
 
 When the godot-project module ran, record:
 
@@ -343,7 +371,8 @@ Check, then report:
 - `## Where truth lives` carries the `Decisions` and `Doc artifacts` rows.
 - The `ste-writing` mandate reaches `docs/`.
 - `journals/README.md` §Where things go has the `docs/` row.
-- `journals/README.md` carries the schema footer with the install date.
+- `journals/README.md` carries the schema ledger with the adoption date.
+- The install record carries a `Schema:` line matching the ledger.
 - `skills/journal-craft/SKILL.md` and `skills/orientation/SKILL.md` exist.
 - `AGENTS.md` carries a `## Repository map` section. Empty tables are legal
   at install.

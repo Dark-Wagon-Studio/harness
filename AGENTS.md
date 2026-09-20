@@ -55,7 +55,7 @@ by reading the `SKILL.md`.
 | Skill           | Use                                                                                                                                     |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `ste-writing`   | Rewrite engineering prose (journal entries, docs, PR text, comments) into STE. Mandated for journal entries and for new or edited text in `docs/` and root-level docs. |
-| `journal-craft` | Write and check journal entries against schema 1: qualified decision IDs, status grammar, dependency edges. Mandated when materializing or editing a journal entry. |
+| `journal-craft` | Write and check journal entries against schema 2: the entry schema line, qualified decision IDs, status grammar, dependency edges. Mandated when materializing or editing a journal entry. |
 | `orientation`   | Curate the Repository map (zones, vocabulary bridge, authority procedure) and check curated claims. Runs on area moves, new jargon, and lint findings. |
 
 ## Repository map

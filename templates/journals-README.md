@@ -114,6 +114,7 @@ An entry follows this shape:
 
     Status: <primary>[, <modifier>[, ...]].
     Date: <YYYY-MM-DD>. Depends on: <area>/<NN>, <area>/<NN>.
+    Schema: <N>.
 
     ## Goal
     ## Current state (evidence, verified <date>)
@@ -130,6 +131,10 @@ Notes:
 
 - Use "Depends on: none." when the entry stands alone. Every dependency is an
   area-qualified entry path.
+- **Schema line** — the schema the entry was written under. It comes directly
+  after the `Date:` line. It outranks the ledger below. A new entry carries it
+  before it lands. Entries written before schema 2 carry no line. They resolve
+  through the ledger.
 - **Current state** — what the repo does today. Date the evidence. Link the
   context docs and prior entries that bear on it.
 - **Gap inventory** — one row per gap, with severity and a dimension that
@@ -153,11 +158,40 @@ installed, apply that rule by hand.
 
 ## Schema
 
-This contract carries a schema version. The footer below states it.
+This contract carries a schema version. The ledger below states every schema
+this repo has adopted.
 
-Schema: 1. Adopted: <YYYY-MM-DD>.
+Schema: 2. Adopted: <YYYY-MM-DD>.
 
-The installer fills the adoption date. Entries dated before the adoption
-date are legacy. The lint reports legacy findings as notes. No one rewrites
-a legacy entry to satisfy the schema. Entries dated on or after the
-adoption date follow schema 1 in full.
+The installer fills the adoption date. The ledger is append-only. A bump
+appends one line directly under the last `Schema:` line. A bump never edits a
+line that exists. Versions ascend strictly. Dates ascend strictly. Two
+schemas never share an adoption date, because that makes step 2 below
+ambiguous.
+
+An entry resolves to a schema in three steps:
+
+1. The entry's own `Schema:` line, when it carries one.
+2. Otherwise, the ledger line with the latest adoption date on or before the
+   entry date.
+3. Otherwise, the entry is legacy.
+
+Two cases never reach step 3. A repo with no ledger has nothing to
+grandfather against, so no entry in it is legacy. An entry whose `Date:` line
+does not parse has no date to compare, so it is not legacy either. Both keep
+error-level checks.
+
+The lint reports every finding on a legacy entry as a note. No one rewrites a
+legacy entry to satisfy the schema. An entry that resolves to schema 2 or
+higher must carry a `Schema:` line. An entry that resolves to schema 1 keeps
+the shape it was written with.
+
+Do not add a `Schema:` line to an entry already in the record. An entry you
+are writing now is not yet in the record. Give it the line before you land
+it, even when the lint has already run against the file on disk.
+
+A bump dates its adoption after the newest entry that carries no `Schema:`
+line, and after the last date in the ledger. The first rule keeps an entry
+already in the record from falling under a schema it can never declare. The
+second keeps the ledger ascending. An entry that carries a line does not
+constrain the date.
