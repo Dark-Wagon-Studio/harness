@@ -4,8 +4,8 @@
 Checks curated claims: backticked paths in Repository/Local map tables,
 vocabulary-bridge citations, `<area>/<NN>` journal citations in map and
 where-truth-lives tables, map line budgets, nested-map row duplication,
-relative links and `Derived from:` targets in `docs/`, and the map
-negative-list line.
+relative links, `Derived from:` targets, and section `From` targets in
+`docs/`, superseded `From` targets, and the map negative-list line.
 
 Advisory only: it reports claims that do not resolve. It never writes,
 scores, or gates. Errors exit 1; warnings never fail.
@@ -181,6 +181,32 @@ def check_entry_citation(root, rel, lineno, text, code, label, add):
                 f"{label} does not resolve to a journal entry: {m.group(0)}")
 
 
+def entry_status(root, area, nn):
+    """The entry's `Status:` line, or '' when the entry has none."""
+    area = area.split("/", 1)[1] if area.startswith("journals/") else area
+    base = os.path.join(root, "journals", *area.split("/"))
+    paths = sorted(globmod.glob(os.path.join(base, nn + "-*.md")))
+    paths += sorted(globmod.glob(os.path.join(base, nn + ".md")))
+    for path in paths:
+        for line in find_text(root, os.path.relpath(path, root)).splitlines()[:6]:
+            if line.startswith("Status:"):
+                return line
+    return ""
+
+
+def check_live_from(root, rel, lineno, text, add):
+    """A `From` target names the successor, never a superseded entry.
+
+    `Derived from:` headers are exempt: a header records a commission,
+    which stays true after the commissioning entry is superseded.
+    """
+    for m in REF_RE.finditer(text):
+        status = entry_status(root, m.group(1), m.group(2))
+        if "Superseded by" in status:
+            add(rel, lineno, "O09", "warning",
+                f"From target is superseded: {m.group(0)} ({status})")
+
+
 def path_claims(row):
     """Backticked tokens that claim to be repo paths (citations excluded)."""
     return [t for t in backticked(row)
@@ -203,23 +229,38 @@ def check_vocab_row(root, rel, lineno, cells, add):
     check_entry_citation(root, rel, lineno, row, "O02", "vocabulary citation", add)
 
 
+def starts_from_line(line):
+    """A section `From` line: `From ` at column 0, then an entry citation."""
+    return line.startswith("From ") and REF_RE.match(line, 5) is not None
+
+
+def ends_from_paragraph(line):
+    """A blank line or a block marker closes a `From` paragraph."""
+    return line.strip() == "" or line.lstrip().startswith(("|", "-", "*", "#", ">"))
+
+
 def strip_inline_code(line):
     return re.sub(r"`[^`]*`", "", line)
 
 
 def check_doc(root, rel, add):
-    """O06 relative links and O07 Derived from targets in one docs file."""
+    """O06 relative links, O07 provenance targets, O09 superseded targets."""
     text = find_text(root, rel)
     if not text:
         return
     base = os.path.dirname(rel)
     in_fence = False
+    in_from = False
     for i, line in enumerate(text.splitlines(), 1):
         if line.lstrip().startswith("```"):
             in_fence = not in_fence
+            in_from = False
             continue
         if in_fence:
             continue
+        # A `From` line may wrap, so its paragraph runs to the next blank
+        # line or block marker.
+        in_from = starts_from_line(line) or (in_from and not ends_from_paragraph(line))
         # O07 takes its tail from the raw line: strip_inline_code deletes a
         # backticked target before it can be checked.
         derived = (line.split("Derived from:", 1)[1]
@@ -237,6 +278,9 @@ def check_doc(root, rel, add):
                 add(rel, i, "O06", "error", f"relative link does not resolve: {tgt}")
         if derived is not None:
             check_entry_citation(root, rel, i, derived, "O07", "Derived from target", add)
+        elif in_from:
+            check_entry_citation(root, rel, i, line, "O07", "From target", add)
+            check_live_from(root, rel, i, line, add)
 
 
 def main(argv):

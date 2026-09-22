@@ -46,9 +46,12 @@ Run this skill when:
 ## Checking
 
 Run `python3 skills/orientation/orientation-lint.py` from the repo root. It
-checks path claims in every Repository map, relative links and
-`Derived from:` targets in `docs/`, citation forms, and budgets. Errors are
-claims that do not resolve. Fix the claim or strike it.
+checks path claims in every Repository map, relative links, `Derived from:`
+targets, and section `From` targets in `docs/`, citation forms, and
+budgets. Errors are claims that do not resolve. Fix the claim or strike it.
+A warning names a `From` target that is superseded: cite the successor
+that carries the decision. A `Derived from:` header records a commission
+and never warns.
 
 ## Why the constraints hold
 

@@ -41,13 +41,28 @@ filename.
 
 ## Provenance
 
-- An authored doc opens with `Derived from:` — the journal entries whose
-  decisions it reflects. Add per-section provenance when sections come
-  from different entries.
+- The section is the provenance unit. Each numbered section of a topic
+  doc opens with a `From` line.
+- The `From` line starts with plain `From ` at column 0 and an entry
+  citation: `From <entry>[, <entry>].` It may attribute parts after the
+  first citation: `From journals/combat/01. Retreat odds from
+  journals/combat/03.`
+- The `From` line is its own paragraph. A blank line follows it.
+- A `From` line names the entries whose decisions the section states
+  now. It is not a record of edits.
+- A `From` line and an inline decision citation name live entries only.
+  When an entry is superseded, cite the successor that carries the
+  decision. Prose that tells what an entry once did is not provenance.
+- A topic doc carries no `Derived from:` header. One exception: a
+  single-source doc, whose whole body derives from the entries that
+  commissioned it, such as an investigation. It opens with
+  `Derived from:` and names those entries, in place of section `From`
+  lines. The header records the commission, which stays true after an
+  entry is superseded.
+- `docs/index.md` projects no decisions and carries no provenance line.
+  Its bullets may name entries in prose.
 - An authored doc cites journal entries for provenance. A journal entry
   cites a doc for current state only, never as authority.
-- `docs/index.md` is the entrypoint. It carries `Derived from:` and links
-  when it first projects a journal entry; an empty stub has neither.
 
 ## Format contract
 
@@ -70,5 +85,7 @@ filename.
 
 - Update an authored doc in place when an executed entry changes the
   model it describes. Do it in the same execution.
+- An edit to a section updates its `From` line. Add the entry that now
+  rules the section. Remove an entry that no longer rules it.
 - Trivial fixes — typo, broken link — apply directly.
 - No history sections, no changelogs. Git and journals hold history.

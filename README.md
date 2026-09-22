@@ -22,6 +22,7 @@ read it. One clone holds every dependency.
 | `skills/journal-craft/` | The journal schema skill (canonical home, mandated) |
 | `skills/orientation/` | The Repository map curation skill (canonical home, mandated) |
 | `prompts/harness-reconcile.md` | The upgrade prompt for repos with an older base layer |
+| `prompts/provenance-migrate.md` | The procedure a target entry follows to move doc headers to section `From` lines |
 
 ## Design
 

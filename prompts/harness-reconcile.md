@@ -1,8 +1,11 @@
 # Reconcile an installed DWS base agent layer
 
 Run this in a repo that already carries an older base layer: a
-`journals/README.md` without a schema ledger or with a schema-1 ledger, or an
-`AGENTS.md` without a Repository map. The invocation authorizes this reconcile and nothing else.
+`journals/README.md` without a schema ledger or with a schema-1 ledger, an
+`AGENTS.md` without a Repository map, or a `docs/README.md` whose
+§Provenance still opens every authored doc with `Derived from:`. The
+invocation authorizes this reconcile and nothing else. A step whose target
+is already current is a no-op.
 
 ## Probe
 
@@ -15,6 +18,9 @@ Run this in a repo that already carries an older base layer: a
 - `AGENTS.md`: Repository map section? Skills table rows?
 - `skills/`: which of ste-writing, journal-craft, orientation exist?
 - Nested `AGENTS.md` files? `docs/` present with a README?
+- `docs/README.md` §Provenance: does it still say a topic doc opens with
+  `Derived from:`? Which topic docs and which `docs/index.md` carry a
+  `Derived from:` header?
 - The location of any prior harness install or reconcile entry, for the
   record area.
 
@@ -87,20 +93,33 @@ Run this in a repo that already carries an older base layer: a
    names an older schema, replace it with the row text from
    `templates/AGENTS.md`. `AGENTS.md` is the first file a session reads. A
    row that still says "schema 1" against a schema-2 lint misdirects every
-   session that reads it.
-5. Run both lints from the repo root. Legacy findings are notes. Fix only
+   session that reads it. In §Docs lifecycle, replace the lint sentence
+   that names only "Derived from:" targets with the sentence from
+   `templates/AGENTS.md`, which names `From` and `Derived from:` targets.
+5. Sync the docs provenance contract when the target has a
+   `docs/README.md`. In §Provenance, replace the bullets that came from the
+   template with the template's bullets. Keep the bullets the target added
+   for its own doc kinds. A target rule that gives a doc kind a header
+   naming its commissioning entries is a single-source rule. It matches
+   the template and stays. Add the `From` line rule from the template's
+   §Lifecycle when it is missing. Do not edit
+   topic docs or `docs/index.md`. A doc recut is a design act. When the
+   probe found `Derived from:` headers on topic docs or the index, tell the
+   user to run `prompts/provenance-migrate.md` through a journal entry of
+   their own.
+6. Run both lints from the repo root. Legacy findings are notes. Fix only
    findings on files this reconcile touched. Then report the change in
    finding counts to the user, errors and notes separately. When a target had
    no ledger before this run, the new adoption date grandfathers its whole
    corpus, and every error-level finding on it becomes an advisory note. That
    is the intended effect of adopting a schema over an existing corpus, and
    the user decides whether to accept it.
-6. Record the reconcile under the area of the prior harness install or
+7. Record the reconcile under the area of the prior harness install or
    reconcile entry. Ask one bounded question only when no prior entry exists:
    record under which journal area? Default: `meta`. The entry is
    `journals/<area>/<NN>-harness-reconcile.md` with `Status: Executed.`,
    naming what landed, the adoption date, the record-area choice, and the
-   finding counts from step 5. `NN` is the next free number in that area. Use
+   finding counts from step 6. `NN` is the next free number in that area. Use
    the entry format from the README you just wrote, including the `Schema:`
    line. Read the version the ledger gives for this entry's own date.
 
@@ -108,7 +127,10 @@ Run this in a repo that already carries an older base layer: a
 
 Never rewrite a legacy entry. Never add a `Schema:` line to an entry already
 in the record, whatever its date. This does not bind the reconcile record you
-write in step 6: that entry is yours to write, and it carries the line. Never
+write in step 7: that entry is yours to write, and it carries the line. Never
 edit a ledger line that exists. Never sync contract sections beyond the ones
-step 2(g) names. Never generate map content beyond scaffolded zone rows the
-user accepted. No commits.
+step 2(g) names. In `docs/README.md`, sync only §Provenance and the
+§Lifecycle `From` line rule. In `AGENTS.md`, sync only the Skills table
+and the lint sentence of step 4. Never edit a topic doc or
+`docs/index.md`. Never generate map content beyond scaffolded zone rows
+the user accepted. No commits.

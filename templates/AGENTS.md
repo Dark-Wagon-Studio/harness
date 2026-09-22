@@ -95,7 +95,7 @@ generated reference docs derive from the tool that builds them. The
 repo-root `README.md` links to `docs/index.md`, the start-here that
 links every topic doc. For the doc model and authoring contract, read
 `docs/README.md`. Provenance targets must resolve. The "orientation" lint
-checks "Derived from:" targets and doc links.
+checks `From` and `Derived from:` targets and doc links.
 
 ## Where truth lives
 

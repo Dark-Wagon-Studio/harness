@@ -1,2 +1,3 @@
 .agents/
 **/.pi-subagents/*
+__pycache__/
