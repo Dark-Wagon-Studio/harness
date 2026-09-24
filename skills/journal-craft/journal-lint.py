@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""journal-lint.py — advisory lint for journal entries under schema 2.
+"""journal-lint.py — advisory lint for journal entries under schema 3.
 
 Linter law: this tool reports claims that do not resolve. It never writes
 files, generates content, scores, ranks, or gates. Findings print one per
@@ -44,7 +44,8 @@ Checks:
   J06  entry path nests at most one line level under an area (two or
        three path components under journals/)
   J07  dates are ISO 8601 everywhere they appear (the Date line itself is
-       J04's; J07 skips it)
+       J04's; J07 skips it; quote lines are exempt, because verbatim
+       session speech may carry a date the contract did not write)
   J08  journals/README.md carries the schema ledger: at least one
        "Schema: N. Adopted: <date>." line, each with a valid date, versions
        and dates both ascending, no version repeated
@@ -63,7 +64,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-SCHEMA_MAX = 2
+SCHEMA_MAX = 3
 
 PRIMARY_STATES = ("Materialized", "Decided", "Executed")
 BASE_MODIFIERS = ("Provisional", "On hold")
@@ -496,9 +497,13 @@ def lint_entry(p, rel, ledger, declared, index):
                     add("J05", lineno, f"decision item is unnumbered: {excerpt(s)}")
 
     # J07 — dates are ISO 8601 everywhere they appear. The Date line is
-    # J04's; J07 skips it to avoid double-reporting.
+    # J04's; J07 skips it to avoid double-reporting. Quote lines are exempt:
+    # they carry verbatim session speech, and a date inside one is evidence,
+    # not a contract date.
     for i, line in enumerate(lines):
         if date_lineno is not None and i + 1 == date_lineno:
+            continue
+        if line.startswith(">"):
             continue
         for m in ISO_TOKEN_RE.finditer(line):
             if iso_date(m.group(1)) is None:

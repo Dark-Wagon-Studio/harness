@@ -147,21 +147,33 @@ Notes:
 - **Verification** — the definition of done.
 - **Execution log** — append to the same file once the work is done. Do not
   keep it in a separate file.
+- **Ruling receipts** — when a section rests on what the user said in
+  session, quote the words next to the claim. Quote the key part inline,
+  in quotation marks, or set the whole ruling out as a quote line with its
+  date:
+
+      > "<the user's words>"
+      > — the user, <YYYY-MM-DD>
+
+  The form is the author's choice. Quote only words still present,
+  verbatim, in the session context. State a restatement as a restatement.
+  Never reconstruct a quote. The quote is evidence of the ask. The
+  decisions are the ruling.
 
 Name actual files, paths, and contracts in every section.
 
 ## Style
 
 Write entries with the `ste-writing` skill (`skills/ste-writing/`): active
-voice, short sentences, one name for one thing. If the skill is not
-installed, apply that rule by hand.
+voice, short sentences, one name for one thing. Quoted user speech keeps
+its exact form. If the skill is not installed, apply that rule by hand.
 
 ## Schema
 
 This contract carries a schema version. The ledger below states every schema
 this repo has adopted.
 
-Schema: 2. Adopted: <YYYY-MM-DD>.
+Schema: 3. Adopted: <YYYY-MM-DD>.
 
 The installer fills the adoption date. The ledger is append-only. A bump
 appends one line directly under the last `Schema:` line. A bump never edits a

@@ -5,7 +5,7 @@ description: Rewrite prose (docs, READMEs, PR descriptions, error messages, rele
 
 # ste-writing
 
-Write prose in ASD-STE100 Simplified Technical English. This applies to documentation, READMEs, pull-request text, error messages, release notes, and comments. It does not apply to code, identifiers, or command syntax. It is not for marketing copy, essays, or anything that needs a voice — STE strips voice on purpose.
+Write prose in ASD-STE100 Simplified Technical English. This applies to documentation, READMEs, pull-request text, error messages, release notes, and comments. It does not apply to code, identifiers, command syntax, or verbatim quotes. It is not for marketing copy, essays, or anything that needs a voice — STE strips voice on purpose.
 
 ## Rules
 

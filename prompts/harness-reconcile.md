@@ -1,11 +1,11 @@
 # Reconcile an installed DWS base agent layer
 
 Run this in a repo that already carries an older base layer: a
-`journals/README.md` without a schema ledger or with a schema-1 ledger, an
-`AGENTS.md` without a Repository map, or a `docs/README.md` whose
-§Provenance still opens every authored doc with `Derived from:`. The
-invocation authorizes this reconcile and nothing else. A step whose target
-is already current is a no-op.
+`journals/README.md` without a schema ledger or with a ledger below the
+template's highest, an `AGENTS.md` without a Repository map, or a
+`docs/README.md` whose §Provenance still opens every authored doc with
+`Derived from:`. The invocation authorizes this reconcile and nothing else.
+A step whose target is already current is a no-op.
 
 ## Probe
 
@@ -26,13 +26,15 @@ is already current is a no-op.
 
 ## Steps
 
-1. Copy `skills/journal-craft/` and `skills/orientation/` from the harness
-   tree into the target, overwriting the target's copies. Leave *other*
-   skills alone. Do this before step 2, always, even when the target already
-   has these two: a target must never hold a ledger line that its own lint is
-   too old to read. An old lint reads the first `Schema:` line it finds,
-   reports the schema below the one the repo claims, and never runs the entry
-   checks. Nothing warns you.
+1. Copy `skills/journal-craft/`, `skills/orientation/`, and
+   `skills/ste-writing/` from the harness tree into the target, overwriting
+   the target's copies. Leave *other* skills alone. Do this before step 2,
+   always, even when the target already has these: a target must never hold
+   a ledger line that its own lint is too old to read. An old lint reads
+   the first `Schema:` line it finds, reports the schema below the one the
+   repo claims, and never runs the entry checks. Nothing warns you. The
+   ste-writing copy carries no lint, but it carries the quoted-speech
+   exemption the receipt contract depends on.
 2. Update `journals/README.md`. Work through every sub-step. None of them is
    made redundant by another.
 
@@ -46,22 +48,24 @@ is already current is a no-op.
       a `Schema:` line that nobody may add. The third keeps the ledger
       ascending, which the lint requires. A target whose earlier install ran
       on its own adoption date hits the third rule.
-   c. Append `Schema: 2. Adopted: <date>.` directly under the last `Schema:`
+   c. Append the line for the newest schema the template adopts — today
+      `Schema: 3. Adopted: <date>.` — directly under the last `Schema:`
       line, above any prose that follows it. When no `Schema:` line exists,
       write the ledger into a `## Schema` section. When a line already adopts
-      schema 2, skip this append only, and continue with (d) through (g): the
-      ledger is append-only and never repeats a version.
+      that schema, skip this append only, and continue with (d) through (g):
+      the ledger is append-only and never repeats a version.
    d. Never edit a `Schema:` line that exists. A schema-1 line stays, so every
       entry behind it keeps its schema-1 status and its error-level checks.
-   e. Replace the §Schema prose with the schema-2 text from
+   e. Replace the §Schema prose with the text from
       `templates/journals-README.md`: the append-only rule, the strict-ascent
       rule, the three-step resolution with its two exceptions, the
       record-versus-draft rule, and the adoption-date rule. Keep the ledger
       lines the repo already has. Delete the template's own placeholder line
-      `Schema: 2. Adopted: <YYYY-MM-DD>.` — an unfilled placeholder does not
-      match what the lint parses, so a stale one sits in the contract and the
-      lint never reports it. Drop the sentence "The installer fills the
-      adoption date": it is false in a reconciled repo.
+      for the newest schema, `Schema: 3. Adopted: <YYYY-MM-DD>.` — an
+      unfilled placeholder does not match what the lint parses, so a stale
+      one sits in the contract and the lint never reports it. Drop the
+      sentence "The installer fills the adoption date": it is false in a
+      reconciled repo.
    f. In §Entry format, add `Schema: <N>.` to the shape block after the
       `Date:` line, and add the **Schema line** note. Take both from
       `templates/journals-README.md`. Skip whichever of the two the file
@@ -75,6 +79,9 @@ is already current is a no-op.
       - §Entry format notes: the `Depends on: none.` and area-qualified
         dependency rule (J04), and the `"1. **D1 — short name.**"` decision
         numbering rule (J05).
+      - §Entry format notes: the **Ruling receipts** note, and §Style: the
+        quoted-speech sentence — both when the appended ledger line adopts
+        schema 3 or higher.
       - §Layout: the decision citation grammar, `<area>/<NN> D<k>`.
       - §Status: the modifier-declaration prose and the `Modifiers:` line
         contract.

@@ -1,6 +1,6 @@
 ---
 name: journal-craft
-description: Write and check journal entries against schema 2 - the entry schema line, qualified decision IDs, status grammar, dependency and supersession edges, schema resolution. Use when materializing a journal entry, editing one, checking entries with the lint, or citing a decision.
+description: Write and check journal entries against schema 3 - the entry schema line, qualified decision IDs, status grammar, dependency and supersession edges, schema resolution, ruling receipts. Use when materializing a journal entry, editing one, checking entries with the lint, or citing a decision.
 ---
 
 # journal-craft
@@ -10,7 +10,7 @@ skill writes entries that comply and checks entries that exist. The check is a
 lint. It reports claims that do not resolve. It never rewrites, scores, or
 gates.
 
-## Writing rules (schema 2)
+## Writing rules (schema 3)
 
 - Filename: `<NN>-<slug>.md`. Numbering starts at `00` in each directory.
 - Front matter, in order:
@@ -25,6 +25,13 @@ gates.
      directly after the `Date:` line. Read the highest adopted version from
      the ledger in `journals/README.md`. A new entry carries this line before
      it lands. An entry already in the record never gains one.
+- Ruling receipts: when a section rests on what the user said in session,
+  quote the words next to the claim. Quote the key part inline, in
+  quotation marks, or set the whole ruling out as a quote line with its
+  date. The form is the author's choice. Quote only words still present,
+  verbatim, in the session context. Never reconstruct a quote. Capture
+  receipts while you draft: the plan stage holds the words at their most
+  recoverable, and materialization copies them in.
 - Decisions: number every item in `## Decisions` as
   `1. **D1 — short name.** The decision sentence.` Numbers run from 1 inside
   the entry. Drop the section when no cross-cutting choice needs recording.
