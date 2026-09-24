@@ -50,6 +50,7 @@ not work.
 
     Schema: 1. Adopted: 2026-09-18.
     Schema: 2. Adopted: 2026-09-20.
+    Schema: 3. Adopted: 2026-09-24.
 
 An entry resolves to a schema in three steps. First, its own `Schema:` line,
 when it carries one. Second, the ledger line with the latest adoption date on

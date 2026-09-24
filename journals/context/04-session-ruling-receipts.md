@@ -318,3 +318,25 @@ the eight files in the table plus this entry, and `.zcodeignore`. That
 file is the AI session tooling's own artifact, present before this line
 of work began its edits and outside the entry's scope. It stays out of
 the commit.
+
+Review round (three read-only reviewers, after the monsoon apply):
+
+- The J07 exemption promised "quote lines" but exempted only lines that
+  open with `>` at column zero. D1's own example indents the receipt
+  inside a Decisions item, so an author following the contract could hit
+  the exact error D8 says cannot exist. The exemption now strips leading
+  whitespace. The fix rides the commit after this entry's own.
+- The reconcile 2(g) condition named "the appended ledger line" and
+  dangled when the append was skipped because the target already adopts
+  schema 3. It now names the target's ledger, appended or already
+  present.
+- Reconcile step 1 gained a guard. The monsoon apply proved a blanket
+  skill copy can destroy target-local evolution: monsoon's orientation
+  skill was ahead of this tree, and the copy regressed it. Step 1 now
+  diffs each skill before and after the copy and restores target-only
+  additions.
+- The skill's ledger example gained its schema-3 line, matching the
+  ledger it illustrates.
+- Deferred to the next convention line: the sentence "The installer
+  fills the adoption date." in this repo's own §Schema, false in a
+  self-hosted repo since the first reconcile.

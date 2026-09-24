@@ -503,7 +503,7 @@ def lint_entry(p, rel, ledger, declared, index):
     for i, line in enumerate(lines):
         if date_lineno is not None and i + 1 == date_lineno:
             continue
-        if line.startswith(">"):
+        if line.lstrip().startswith(">"):
             continue
         for m in ISO_TOKEN_RE.finditer(line):
             if iso_date(m.group(1)) is None:

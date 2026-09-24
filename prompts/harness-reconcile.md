@@ -35,6 +35,11 @@ A step whose target is already current is a no-op.
    repo claims, and never runs the entry checks. Nothing warns you. The
    ste-writing copy carries no lint, but it carries the quoted-speech
    exemption the receipt contract depends on.
+   A copy can also destroy. A target may hold local evolution the harness
+   tree lacks: its own toolchain wiring, its own checks. Diff each skill
+   against the harness tree before and after the copy. Restore every
+   target-only addition, keep the harness delta, and record both in the
+   reconcile record.
 2. Update `journals/README.md`. Work through every sub-step. None of them is
    made redundant by another.
 
@@ -80,8 +85,8 @@ A step whose target is already current is a no-op.
         dependency rule (J04), and the `"1. **D1 — short name.**"` decision
         numbering rule (J05).
       - §Entry format notes: the **Ruling receipts** note, and §Style: the
-        quoted-speech sentence — both when the appended ledger line adopts
-        schema 3 or higher.
+        quoted-speech sentence — both when the target's ledger adopts
+        schema 3 or higher, appended now or already present.
       - §Layout: the decision citation grammar, `<area>/<NN> D<k>`.
       - §Status: the modifier-declaration prose and the `Modifiers:` line
         contract.
