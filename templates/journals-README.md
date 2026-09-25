@@ -155,7 +155,9 @@ Notes:
       > "<the user's words>"
       > — the user, <YYYY-MM-DD>
 
-  The form is the author's choice. Quote only words still present,
+  The form is the author's choice. The attribution names the speaker, by
+  whatever name the author knows them. The git identity is one such name.
+  `the user` stays the default form. Quote only words still present,
   verbatim, in the session context. State a restatement as a restatement.
   Never reconstruct a quote. The quote is evidence of the ask. The
   decisions are the ruling.

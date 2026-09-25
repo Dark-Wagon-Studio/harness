@@ -28,10 +28,12 @@ gates.
 - Ruling receipts: when a section rests on what the user said in session,
   quote the words next to the claim. Quote the key part inline, in
   quotation marks, or set the whole ruling out as a quote line with its
-  date. The form is the author's choice. Quote only words still present,
-  verbatim, in the session context. Never reconstruct a quote. Capture
-  receipts while you draft: the plan stage holds the words at their most
-  recoverable, and materialization copies them in.
+  date. The form is the author's choice. The attribution names the
+  speaker, by whatever name the author knows them. The git identity is
+  one such name. `the user` stays the default form. Quote only words
+  still present, verbatim, in the session context. Never reconstruct a
+  quote. Capture receipts while you draft: the plan stage holds the words
+  at their most recoverable, and materialization copies them in.
 - Decisions: number every item in `## Decisions` as
   `1. **D1 — short name.** The decision sentence.` Numbers run from 1 inside
   the entry. Drop the section when no cross-cutting choice needs recording.

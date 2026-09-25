@@ -155,7 +155,9 @@ Notes:
       > "<the user's words>"
       > — the user, <YYYY-MM-DD>
 
-  The form is the author's choice. Quote only words still present,
+  The form is the author's choice. The attribution names the speaker, by
+  whatever name the author knows them. The git identity is one such name.
+  `the user` stays the default form. Quote only words still present,
   verbatim, in the session context. State a restatement as a restatement.
   Never reconstruct a quote. The quote is evidence of the ask. The
   decisions are the ruling.
@@ -177,7 +179,8 @@ Schema: 1. Adopted: 2026-09-18.
 Schema: 2. Adopted: 2026-09-20.
 Schema: 3. Adopted: 2026-09-24.
 
-The installer fills the adoption date. The ledger is append-only. A bump
+In a target, the installer fills the adoption date. A self-hosted repo
+fills its own. The ledger is append-only. A bump
 appends one line directly under the last `Schema:` line. A bump never edits a
 line that exists. Versions ascend strictly. Dates ascend strictly. Two
 schemas never share an adoption date, because that makes step 2 below
