@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""journal-lint.py — advisory lint for journal entries under schema 3.
+"""journal-lint.py — advisory lint for journal entries under schema 4.
 
 Linter law: this tool reports claims that do not resolve. It never writes
 files, generates content, scores, ranks, or gates. Findings print one per
@@ -14,7 +14,7 @@ Usage (from the repo root):
 
 Inputs: the `journals/` tree and `journals/README.md`. The README carries the
 schema ledger (one `Schema: N. Adopted: <date>.` line per adopted schema,
-ascending) and the optional `Modifiers:` line.
+ascending) and the optional `Modifiers:` and `Citations:` lines.
 
 An entry resolves to a schema in three steps: its own `Schema: <N>.` line
 when it carries one, otherwise the ledger line with the latest adoption date
@@ -54,6 +54,24 @@ Checks:
        the Date line, it does not exceed the highest adopted version, and it
        is present on every entry that resolves to schema 2 or higher. A
        declaration above SCHEMA_MAX is a note and skips the entry
+  J10  citations in the entry body resolve: "<area>/<NN>" (optional
+       "journals/" prefix, "-slug", ".md") resolves to an entry and
+       "<area>/<NN> D<k>" to a decision in it; "§<k>" resolves the entry
+       only, because sections are named, not numbered. Every citation area
+       is letter-led: ratio tokens in evidence prose ("31/37") are counts,
+       not citations. Quote lines, inline code spans, and decision
+       definitions inside the Decisions section are exempt, and a declared
+       "Citations:" shape is recognized but never resolved. A bare "D<k>"
+       is a note unless the containing entry defines that decision, and
+       reports nothing below schema 4. A miss is an error on schema 4 or
+       higher, a note below schema 4. A relative filesystem path that ends
+       like an entry citation ("dir/NN-slug.md") still matches; no such
+       token exists outside "journals/" today.
+
+The citation grammar is importable: CITATION_ENTRY_RE, CITATION_DECISION_RE,
+CITATION_SECTION_RE, BARE_DECISION_RE, and CITATIONS_LINE_RE, the (entry,
+decision) indexes from build_indexes(), and shape_to_regex() for a declared
+shape. A downstream indexer imports the grammar instead of re-deriving it.
 
 Deterministic: two runs on the same tree print identical output. Python 3
 standard library only; no network.
@@ -64,7 +82,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-SCHEMA_MAX = 3
+SCHEMA_MAX = 4
 
 PRIMARY_STATES = ("Materialized", "Decided", "Executed")
 BASE_MODIFIERS = ("Provisional", "On hold")
@@ -101,6 +119,40 @@ NON_ISO_DATE_RE = re.compile(
     r"|(?:0?[1-9]|[12]\d|3[01])\.(?:0?[1-9]|1[0-2])\.\d{4}"
     r"|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? \d{1,2},? \d{4})\b")
 
+# Citation grammar (schema 4). Importable: a downstream indexer imports the
+# grammar instead of re-deriving it. An entry citation is an optional
+# journals/ prefix, one or two area segments, /<NN>, an optional -slug and
+# .md. Every citation area is letter-led: ratio tokens in evidence prose
+# ("31/37") are counts, not citations. The lookbehind keeps a filesystem
+# path from reading as a citation; the trailing guards keep a longer path or
+# a non-.md extension from matching (guards reused from orientation-lint
+# REF_RE).
+_CITATION_HEAD = r"(?<![\w./-])(?:journals/)?"
+_CITATION_AREA = r"([A-Za-z][A-Za-z0-9_-]*(?:/[A-Za-z0-9][A-Za-z0-9_-]*)?)"
+_CITATION_ENTRY = r"/(\d{2})(?:-[A-Za-z0-9][A-Za-z0-9_-]*)?(?:\.md)?"
+_CITATION_TAIL = r"(?![\w/-])(?!\.[A-Za-z0-9])"
+CITATION_ENTRY_RE = re.compile(
+    _CITATION_HEAD + _CITATION_AREA + _CITATION_ENTRY + _CITATION_TAIL)
+# A decision citation is an entry citation followed on the same line by
+# whitespace, then D<k> ("\s+D(\d+)"): a double space or tab still
+# composes a decision citation.
+CITATION_DECISION_RE = re.compile(
+    _CITATION_HEAD + _CITATION_AREA + _CITATION_ENTRY + r"\s+D(\d+)"
+    + _CITATION_TAIL)
+# A section citation resolves to the entry only: <k> is never validated,
+# because sections are named, not numbered.
+CITATION_SECTION_RE = re.compile(
+    _CITATION_HEAD + _CITATION_AREA + _CITATION_ENTRY + r" §(\d+)"
+    + _CITATION_TAIL)
+# A bare decision ID in prose, word-bounded. The lookbehind also excludes a
+# bold lead, so a "**D1" definition head never matches; "D<k>" template text
+# has a letter where a digit is required.
+BARE_DECISION_RE = re.compile(r"(?<![\w*])D(\d+)(?!\w)")
+# A column-zero "Citations:" line in journals/README.md, anchored exactly
+# like MODIFIERS_LINE_RE: an indented line is documentation, not a
+# declaration.
+CITATIONS_LINE_RE = re.compile(r"^Citations:\s*(.*?)\s*\.?\s*$")
+
 EXCERPT_MAX = 64
 
 
@@ -125,6 +177,17 @@ def display_dir(rel_dir_parts):
     return "journals/" + "/".join(rel_dir_parts) if rel_dir_parts else "journals"
 
 
+def shape_to_regex(shape):
+    """Compile one declared citation shape ("R<k>") to a bounded regex.
+
+    Escapes the literal text and replaces <k> with \\d+. The citation
+    boundary guards make the regex match a whole prose token, never a
+    fragment of one.
+    """
+    body = re.escape(shape).replace(re.escape("<k>"), r"\d+")
+    return re.compile(r"(?<![\w./-])" + body + r"(?![\w/-])(?!\.[A-Za-z0-9])")
+
+
 def discover_entries(journals):
     if not journals.is_dir():
         return []
@@ -142,13 +205,16 @@ def discover_entries(journals):
 def lint_readme(readme):
     """Parse journals/README.md.
 
-    Returns (findings, declared_modifiers, ledger, notice). The ledger holds
-    one (version, date, iso, lineno) tuple per adopted schema, in file order.
+    Returns (findings, declared, declared_shapes, ledger, notice). The
+    ledger holds one (version, date, iso, lineno) tuple per adopted schema,
+    in file order. Declared shapes are the "Citations:" tokens that contain
+    "<k>"; a token without "<k>" declares nothing matchable and is ignored.
     The notice is set only when the ledger's highest version is newer than
     SCHEMA_MAX.
     """
     findings = []
     declared = []
+    declared_shapes = []
     ledger = []
     notice = None
 
@@ -160,13 +226,13 @@ def lint_readme(readme):
         j08(0, "journals/README.md not found: no schema ledger "
                '("Schema: N. Adopted: YYYY-MM-DD."), adoption date, or '
                "declared modifiers")
-        return findings, declared, ledger, notice
+        return findings, declared, declared_shapes, ledger, notice
     try:
         text = readme.read_text(encoding="utf-8")
     except OSError:
         j08(0, "journals/README.md cannot be read; schema ledger and "
                "declared modifiers unchecked")
-        return findings, declared, ledger, notice
+        return findings, declared, declared_shapes, ledger, notice
 
     raw = []
     for lineno, line in enumerate(text.splitlines(), 1):
@@ -179,11 +245,17 @@ def lint_readme(readme):
                 name = name.strip()
                 if name and name not in declared:
                     declared.append(name)
+        cm = CITATIONS_LINE_RE.match(line)
+        if cm:
+            for shape in cm.group(1).split(","):
+                shape = shape.strip()
+                if shape and "<k>" in shape and shape not in declared_shapes:
+                    declared_shapes.append(shape)
 
     if not raw:
         j08(0, 'schema ledger missing or malformed (expected at least one '
                '"Schema: N. Adopted: YYYY-MM-DD." line)')
-        return findings, declared, ledger, notice
+        return findings, declared, declared_shapes, ledger, notice
 
     # A ledger this lint cannot read makes every resolution untrustworthy, so
     # the whole run stops. One entry above SCHEMA_MAX is a note on that entry.
@@ -192,7 +264,7 @@ def lint_readme(readme):
         lineno = next(ln for v, _iso, ln in raw if v == highest)
         notice = (f"notice: journals/README.md:{lineno} declares schema "
                   f"{highest}; this lint understands schema {SCHEMA_MAX}")
-        return findings, declared, ledger, notice
+        return findings, declared, declared_shapes, ledger, notice
 
     prev = None
     for version, iso, lineno in raw:
@@ -213,28 +285,36 @@ def lint_readme(readme):
                             f"after {prev_date.isoformat()}")
         ledger.append((version, adopted, iso, lineno))
         prev = (version, adopted)
-    return findings, declared, ledger, notice
+    return findings, declared, declared_shapes, ledger, notice
+
+
+def front_matter_end(lines):
+    """Return the index where the front-matter block ends and the body starts.
+
+    The block ends at the first "## " heading or at the blank line that
+    closes the header, whichever comes first. An entry with no section
+    heading therefore cannot drag prose into the block.
+    """
+    in_block = False
+    for i, line in enumerate(lines):
+        if SECTION_HEADING_RE.match(line):
+            return i
+        if i > 0 and line.strip():
+            in_block = True
+        elif in_block and not line.strip():
+            return i
+    return len(lines)
 
 
 def read_entry_schema(lines):
     """Read an entry's "Schema: <N>." declaration from its front matter.
 
-    The front matter is the block of lines after the heading, and it ends at
-    the first "## " heading or at the blank line that closes the block,
-    whichever comes first. An entry with no section heading therefore cannot
-    drag prose into the scan. Returns (lineno, version, findings). The
-    findings are (code, lineno, msg) tuples the caller emits once it knows
-    whether the entry is legacy.
+    The front matter ends where front_matter_end says it ends. Returns
+    (lineno, version, findings). The findings are (code, lineno, msg) tuples
+    the caller emits once it knows whether the entry is legacy.
     """
     found = []
-    in_block = False
-    for i, line in enumerate(lines):
-        if SECTION_HEADING_RE.match(line):
-            break
-        if i > 0 and line.strip():
-            in_block = True
-        elif in_block and not line.strip():
-            break
+    for i, line in enumerate(lines[:front_matter_end(lines)]):
         if line.startswith("Schema:"):
             found.append((i + 1, line))
     if not found:
@@ -274,7 +354,43 @@ def resolve_schema(ledger, entry_date, entry_schema):
     return None, True
 
 
-def lint_entry(p, rel, ledger, declared, index):
+def collect_citations(line, in_code_span, declared_res):
+    """Collect citation matches on one line, outside inline code spans.
+
+    Each backtick on a scanned line toggles the span, whose state the
+    caller carries across scanned lines; text inside a span is hidden,
+    including whole lines of a
+    multi-line span. Returns (start, end, kind, m) tuples with offsets into
+    the line. One citation resolves once: a match overlapping an already
+    claimed span is dropped. Declared shapes claim first, then decision,
+    section, entry, and bare decision citations.
+    """
+    matches = []
+    claimed = []
+
+    def take(text, offset, regex, kind):
+        for m in regex.finditer(text):
+            s, e = offset + m.start(), offset + m.end()
+            if any(s < ce and cs < e for cs, ce in claimed):
+                continue
+            claimed.append((s, e))
+            matches.append((s, e, kind, m))
+
+    pos = 0
+    for j, part in enumerate(line.split("`")):
+        if (j % 2 == 0) != in_code_span:
+            for regex in declared_res:
+                take(part, pos, regex, "declared")
+            take(part, pos, CITATION_DECISION_RE, "decision")
+            take(part, pos, CITATION_SECTION_RE, "section")
+            take(part, pos, CITATION_ENTRY_RE, "entry")
+            take(part, pos, BARE_DECISION_RE, "bare")
+        pos += len(part) + 1
+    return matches
+
+
+def lint_entry(p, rel, ledger, declared, declared_shapes, entry_index,
+               decision_index):
     """Lint one entry file. Returns (findings, legacy, skipped).
 
     "skipped" is True when the entry declares a schema above SCHEMA_MAX. The
@@ -381,7 +497,7 @@ def lint_entry(p, rel, ledger, declared, index):
                     if not am:
                         add("J04", date_lineno,
                             f'dependency does not parse as "<area>/<NN>": {item}')
-                    elif (am.group(1), am.group(2)) not in index:
+                    elif (am.group(1), am.group(2)) not in entry_index:
                         add("J04", date_lineno,
                             f"dependency does not resolve: {item}")
 
@@ -450,22 +566,26 @@ def lint_entry(p, rel, ledger, declared, index):
                         add("J03", status_lineno,
                             f'supersession target does not parse as '
                             f'"<area>/<NN>": {ref}')
-                    elif (am.group(1), am.group(2)) not in index:
+                    elif (am.group(1), am.group(2)) not in entry_index:
                         add("J03", status_lineno,
                             f"supersession target does not resolve: {ref}")
 
-    # J05 — Decisions numbering.
+    # J05 — Decisions numbering. The section's span (dec_start..dec_end) is
+    # shared with J10 below, so both checks mean the same lines by
+    # "## Decisions".
     dec_start = None
     for i, line in enumerate(lines):
         if DECISIONS_HEADING_RE.match(line):
             dec_start = i
             break
+    dec_end = None
     if dec_start is not None:
         section = []
         j = dec_start + 1
         while j < len(lines) and not SECTION_HEADING_RE.match(lines[j]):
             section.append((j + 1, lines[j]))
             j += 1
+        dec_end = j
         seq = 0
         unnumbered = []
         for lineno, line in section:
@@ -512,6 +632,53 @@ def lint_entry(p, rel, ledger, declared, index):
         for m in NON_ISO_DATE_RE.finditer(line):
             add("J07", i + 1,
                 f"date not in ISO 8601 (YYYY-MM-DD): {m.group(1)}")
+
+    # J10 — inline citation resolution. Scans the body only: the front matter
+    # holds the Status and Depends on lines, J03/J04 territory. Quote lines
+    # are exempt (verbatim session speech may cite anything) and decision
+    # definitions are J05's, exempt only inside the Decisions section. The
+    # code-span state carries across scanned lines and hides grammar
+    # illustrations that cite entries of other repos. A declared shape is
+    # recognized and never resolved; a bare D<k> is exempt when this entry
+    # defines it. The class is computed here: on schema 4 or higher a miss
+    # is an error and a bare ID a note; below it a miss is a note and a
+    # bare ID reports nothing.
+    gate = effective is not None and effective >= 4
+    miss_cls = "error" if gate else "note"
+    fnm = ENTRY_FILENAME_RE.match(p.name)
+    own = fnm.group(1) if fnm else None
+    own_decisions = {k for a, n, k in decision_index
+                     if a == rel_dir and n == own}
+    declared_res = [shape_to_regex(s) for s in declared_shapes]
+    in_code_span = False
+    body_start = front_matter_end(lines)
+    for i, line in enumerate(lines):
+        in_decisions = dec_start is not None and dec_start < i < dec_end
+        if i >= body_start and not line.lstrip().startswith(">") \
+                and not (in_decisions
+                         and DECISION_ITEM_RE.match(line.strip())):
+            for _s, _e, kind, m in collect_citations(
+                    line, in_code_span, declared_res):
+                if kind == "declared":
+                    continue
+                if kind == "bare":
+                    if int(m.group(1)) not in own_decisions and gate:
+                        add("J10", i + 1,
+                            f"bare decision ID; the entry qualifies it: "
+                            f"D{m.group(1)}", cls="note")
+                    continue
+                area, nn = m.group(1), m.group(2)
+                if (area, nn) not in entry_index:
+                    add("J10", i + 1,
+                        f"citation does not resolve to an entry: "
+                        f"{m.group(0)}", cls=miss_cls)
+                elif kind == "decision" \
+                        and (area, nn, int(m.group(3))) not in decision_index:
+                    add("J10", i + 1,
+                        f"decision citation does not resolve: "
+                        f"{area}/{nn} D{m.group(3)}", cls=miss_cls)
+            if line.count("`") % 2:
+                in_code_span = not in_code_span
 
     return findings, legacy, skipped
 
@@ -566,32 +733,72 @@ def lint_numbering(entries, legacy_by_path, skipped_paths):
     return findings
 
 
+def build_indexes(journals):
+    """Build the citation indexes for the journals tree.
+
+    Returns (entry_index, decision_index). entry_index maps (area_dir, NN)
+    to the entry Path; area_dir is the entry's directory under journals/ as
+    a /-joined string. decision_index holds one (area_dir, NN, k) per
+    decision definition, walked exactly as J05 walks the "## Decisions"
+    section. The index records, it does not judge: numbering findings stay
+    J05's.
+    """
+    entry_index = {}
+    decision_index = set()
+    for p, rel in discover_entries(journals):
+        fm = ENTRY_FILENAME_RE.match(p.name)
+        if not fm:
+            continue
+        area_dir = "/".join(rel.parts[:-1])
+        nn = fm.group(1)
+        entry_index[(area_dir, nn)] = p
+        try:
+            lines = p.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        dec_start = None
+        for i, line in enumerate(lines):
+            if DECISIONS_HEADING_RE.match(line):
+                dec_start = i
+                break
+        if dec_start is None:
+            continue
+        j = dec_start + 1
+        while j < len(lines) and not SECTION_HEADING_RE.match(lines[j]):
+            if NUMBERED_ITEM_RE.match(lines[j]):
+                dm = DECISION_ITEM_RE.match(lines[j].strip())
+                if dm:
+                    decision_index.add((area_dir, nn, int(dm.group(2))))
+            j += 1
+    return entry_index, decision_index
+
+
 def lint_repo(root):
     journals = root / "journals"
-    readme_findings, declared, ledger, notice = lint_readme(journals / "README.md")
+    readme_findings, declared, declared_shapes, ledger, notice = \
+        lint_readme(journals / "README.md")
     if notice is not None:
-        return readme_findings, ledger, notice
+        return readme_findings, ledger, notice, {}, {}
     entries = discover_entries(journals)
-    index = {}
-    for p, rel in entries:
-        fm = ENTRY_FILENAME_RE.match(p.name)
-        if fm:
-            index[("/".join(rel.parts[:-1]), fm.group(1))] = p
+    entry_index, decision_index = build_indexes(journals)
     findings = list(readme_findings)
     legacy_by_path = {}
     skipped_paths = set()
     for p, rel in entries:
-        entry_findings, legacy, skipped = lint_entry(p, rel, ledger, declared, index)
+        entry_findings, legacy, skipped = lint_entry(
+            p, rel, ledger, declared, declared_shapes,
+            entry_index, decision_index)
         legacy_by_path[p.as_posix()] = legacy
         if skipped:
             skipped_paths.add(p.as_posix())
         findings.extend(entry_findings)
     findings.extend(lint_numbering(entries, legacy_by_path, skipped_paths))
-    return findings, ledger, notice
+    return findings, ledger, notice, entry_index, decision_index
 
 
 def main():
-    findings, ledger, notice = lint_repo(Path.cwd())
+    findings, ledger, notice, _entry_index, _decision_index = \
+        lint_repo(Path.cwd())
     if notice is not None:
         print(notice)
         return 2

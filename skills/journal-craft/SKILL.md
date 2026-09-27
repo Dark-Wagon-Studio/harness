@@ -1,6 +1,6 @@
 ---
 name: journal-craft
-description: Write and check journal entries against schema 3 - the entry schema line, qualified decision IDs, status grammar, dependency and supersession edges, schema resolution, ruling receipts. Use when materializing a journal entry, editing one, checking entries with the lint, or citing a decision.
+description: Write and check journal entries against schema 4 - the entry schema line, qualified decision IDs, status grammar, dependency and supersession edges, schema resolution, ruling receipts. Use when materializing a journal entry, editing one, checking entries with the lint, or citing a decision.
 ---
 
 # journal-craft
@@ -10,7 +10,7 @@ skill writes entries that comply and checks entries that exist. The check is a
 lint. It reports claims that do not resolve. It never rewrites, scores, or
 gates.
 
-## Writing rules (schema 3)
+## Writing rules (schema 4)
 
 - Filename: `<NN>-<slug>.md`. Numbering starts at `00` in each directory.
 - Front matter, in order:
@@ -38,7 +38,12 @@ gates.
   `1. **D1 — short name.** The decision sentence.` Numbers run from 1 inside
   the entry. Drop the section when no cross-cutting choice needs recording.
 - Citation grammar: `<area>/<NN> §<k>` for a section, `<area>/<NN> D<k>` for a
-  decision. Never cite a bare ID. The entry qualifies it.
+  decision. Every citation must resolve: the entry, and the decision when the
+  citation names one. Never cite a bare ID. The entry qualifies it. A bare ID
+  in the entry that defines it reads as that entry's own decision; any other
+  bare ID is a lint note. The `Citations:` line in `journals/README.md`
+  declares extra citation shapes. Declared shapes are shape-checked, not
+  resolved.
 
 ## Checking
 
@@ -53,6 +58,7 @@ not work.
     Schema: 1. Adopted: 2026-09-18.
     Schema: 2. Adopted: 2026-09-20.
     Schema: 3. Adopted: 2026-09-24.
+    Schema: 4. Adopted: 2026-09-27.
 
 An entry resolves to a schema in three steps. First, its own `Schema:` line,
 when it carries one. Second, the ledger line with the latest adoption date on

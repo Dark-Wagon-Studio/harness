@@ -79,3 +79,9 @@ resolve through the ledger in `journals/README.md`, which holds one
 `Schema: <N>. Adopted: <date>.` line per adopted schema and only ever
 grows. The lints embed the highest schema they understand, keep checking
 older ones, and report when they meet a newer one.
+
+Schema 4 adds citation resolution: every inline citation in an entry
+must resolve to an entry and, when it names one, to a decision in that
+entry. The citation grammar ships as importable symbols on the
+journal-craft lint, so a tool that indexes journals imports the
+grammar instead of re-deriving it.

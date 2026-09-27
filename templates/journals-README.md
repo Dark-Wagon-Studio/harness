@@ -49,6 +49,16 @@ cite a bare `journals/01`. The number is only meaningful together with its
 directory. Cite a decision as "<area>/<NN> D<k>", for example "gameplay/02
 D3". Never cite a bare decision ID. The entry qualifies it.
 
+A project extends the citation set by declaring it. Add one line to
+this README, directly under the citation rule above:
+
+    Citations: <shape>, <shape>.
+
+A shape writes `<k>` where a number goes. The journal-craft lint
+recognizes the base grammar plus the declared shapes, and nothing
+else. A declared shape is shape-checked, not resolved. Resolution
+needs repo knowledge the harness does not hold.
+
 ## Status
 
 Each entry opens with a status line:
@@ -175,7 +185,7 @@ its exact form. If the skill is not installed, apply that rule by hand.
 This contract carries a schema version. The ledger below states every schema
 this repo has adopted.
 
-Schema: 3. Adopted: <YYYY-MM-DD>.
+Schema: 4. Adopted: <YYYY-MM-DD>.
 
 The installer fills the adoption date. The ledger is append-only. A bump
 appends one line directly under the last `Schema:` line. A bump never edits a

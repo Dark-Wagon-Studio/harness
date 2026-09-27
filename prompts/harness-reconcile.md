@@ -53,9 +53,10 @@ A step whose target is already current is a no-op.
       a `Schema:` line that nobody may add. The third keeps the ledger
       ascending, which the lint requires. A target whose earlier install ran
       on its own adoption date hits the third rule.
-   c. Append the line for the newest schema the template adopts — today
-      `Schema: 3. Adopted: <date>.` — directly under the last `Schema:`
-      line, above any prose that follows it. When no `Schema:` line exists,
+   c. Append the line for the newest schema the template adopts, read from
+      the template's highest ledger line — `Schema: <N>. Adopted: <date>.` —
+      directly under the last `Schema:` line, above any prose that follows
+      it. When no `Schema:` line exists,
       write the ledger into a `## Schema` section. When a line already adopts
       that schema, skip this append only, and continue with (d) through (g):
       the ledger is append-only and never repeats a version.
@@ -66,11 +67,10 @@ A step whose target is already current is a no-op.
       rule, the three-step resolution with its two exceptions, the
       record-versus-draft rule, and the adoption-date rule. Keep the ledger
       lines the repo already has. Delete the template's own placeholder line
-      for the newest schema, `Schema: 3. Adopted: <YYYY-MM-DD>.` — an
-      unfilled placeholder does not match what the lint parses, so a stale
-      one sits in the contract and the lint never reports it. Drop the
-      sentence "The installer fills the adoption date": it is false in a
-      reconciled repo.
+      for the newest schema — an unfilled placeholder does not match what
+      the lint parses, so a stale one sits in the contract and the lint
+      never reports it. Drop the sentence "The installer fills the adoption
+      date": it is false in a reconciled repo.
    f. In §Entry format, add `Schema: <N>.` to the shape block after the
       `Date:` line, and add the **Schema line** note. Take both from
       `templates/journals-README.md`. Skip whichever of the two the file
@@ -87,7 +87,8 @@ A step whose target is already current is a no-op.
       - §Entry format notes: the **Ruling receipts** note, and §Style: the
         quoted-speech sentence — both when the target's ledger adopts
         schema 3 or higher, appended now or already present.
-      - §Layout: the decision citation grammar, `<area>/<NN> D<k>`.
+      - §Layout: the citation rule — entry and decision citations — and
+        the `Citations:` declaration paragraph.
       - §Status: the modifier-declaration prose and the `Modifiers:` line
         contract.
       - §Workflow: "Run the journal-craft lint before landing the entry. Fix

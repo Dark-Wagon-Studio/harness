@@ -49,6 +49,16 @@ cite a bare `journals/01`. The number is only meaningful together with its
 directory. Cite a decision as "<area>/<NN> D<k>", for example "gameplay/02
 D3". Never cite a bare decision ID. The entry qualifies it.
 
+A project extends the citation set by declaring it. Add one line to
+this README, directly under the citation rule above:
+
+    Citations: <shape>, <shape>.
+
+A shape writes `<k>` where a number goes. The journal-craft lint
+recognizes the base grammar plus the declared shapes, and nothing
+else. A declared shape is shape-checked, not resolved. Resolution
+needs repo knowledge the harness does not hold.
+
 ## Status
 
 Each entry opens with a status line:
@@ -178,6 +188,7 @@ this repo has adopted.
 Schema: 1. Adopted: 2026-09-18.
 Schema: 2. Adopted: 2026-09-20.
 Schema: 3. Adopted: 2026-09-24.
+Schema: 4. Adopted: 2026-09-27.
 
 In a target, the installer fills the adoption date. A self-hosted repo
 fills its own. The ledger is append-only. A bump
