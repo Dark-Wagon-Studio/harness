@@ -17,6 +17,7 @@ read it. One clone holds every dependency.
 | `skills/ste-writing/` | The STE prose skill (canonical home, mandated) |
 | `skills/jtbd-coach/` | The JTBD coaching skill (canonical home, optional at install) |
 | `modules/godot-project/` | The Godot 4 project module (Godot conventions + class-API docs regen, optional at install) |
+| `modules/godot-gdunit4/` | The Godot 4 gdUnit4 test module (vendored addon + sample suite, optional at install) |
 | `prompts/harness-init.md` | The installer instructions |
 | `templates/AGENTS-nested.md` | The nested AGENTS.md stub for monorepo subtrees |
 | `skills/journal-craft/` | The journal schema skill (canonical home, mandated) |
@@ -59,9 +60,15 @@ generated maps, no CI gates. The measured basis lives in
    `AGENTS.md`, drops `regen_godot_docs.sh` at the repo root, appends
    `docs/godot-api/` to `.gitignore`, and runs a first-time regen via
    `uv run`. Requires `godot` and `uv` on `PATH`.
-8. Add `.agents/` and `**/.pi-subagents/*` to `.gitignore`. Create
+8. Add `.agents/`, `**/.pi-subagents/*`, and `.kilo/` to `.gitignore`. Create
    `.agents/.gitkeep`.
-9. Record the install as `journals/<area>/<NN>-harness-install.md` with
+9. Optionally, for Godot projects that use gdUnit4, copy
+   `modules/godot-gdunit4/` and follow its manifest
+   (`modules/godot-gdunit4/README.md`). The installer vendors the latest
+   gdUnit4 release under `addons/gdUnit4/`, enables the plugin, adds a sample
+   suite, appends `reports/` and `GdUnitRunner.cfg` to `.gitignore`, and runs
+   the suite. Requires `godot` on `PATH` and the `godot-project` module.
+10. Record the install as `journals/<area>/<NN>-harness-install.md` with
    `Status: Executed.` The area is the repo's choice. Default: `meta`. When a
    prior harness install or reconcile entry exists, draft its area. A new area
    starts at `00`; an existing area takes its next free number.

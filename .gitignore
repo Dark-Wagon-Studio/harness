@@ -1,3 +1,4 @@
 .agents/
 **/.pi-subagents/*
+.kilo/
 __pycache__/

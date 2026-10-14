@@ -24,18 +24,22 @@ Opt-in layer. The installer asks before any of these land:
 - `modules/godot-project/` — opt-in module for Godot projects (Godot 4
   conventions for `AGENTS.md` plus a class-API docs regen pipeline). Default:
   no.
+- `modules/godot-gdunit4/` — opt-in module for Godot projects that use gdUnit4
+  (vendored addon, enabled plugin, sample suite). Default: no. Depends on
+  `modules/godot-project/`.
 
 Record the install at:
 
 - `journals/<area>/<NN>-harness-install.md` — written after the work with
-  `Status: Executed.` Records base + applied modules + the godot-module decision
-  (opted in, declined, or deps missing). The area is the target's choice —
-  see the Phase 2 record-area gate. A new area starts at `00`. An existing
-  area takes its next free number.
+  `Status: Executed.` Records base + applied modules + the godot-module and
+  gdUnit4-module decisions (opted in, declined, or deps missing). The area is
+  the target's choice — see the Phase 2 record-area gate. A new area starts at
+  `00`. An existing area takes its next free number.
 
 The manifests the installer reads to apply each module live alongside the
 module's files in the harness tree — for the godot-project module, see
-`modules/godot-project/README.md`.
+`modules/godot-project/README.md`; for the gdUnit4 module, see
+`modules/godot-gdunit4/README.md`.
 
 ## Authorization and scope
 
@@ -68,7 +72,8 @@ Gather these facts in one pass before writing anything:
 - Do `AGENTS.md` or `CLAUDE.md` exist? If yes, do they define a planning or
   journaling workflow?
 - Nested `AGENTS.md` files anywhere in the tree? List them.
-- Does `.gitignore` exist? Does it cover `.agents/` and `**/.pi-subagents/*`?
+- Does `.gitignore` exist? Does it cover `.agents/`, `**/.pi-subagents/*`, and
+  `.kilo/`?
 - Is there a docs directory? Check `docs/`, `doc/`, `Assets/Docs/`. If
   `docs/` exists, do `docs/README.md` and `docs/index.md` already exist?
 - Does the repo-root `README.md` exist? Does it link to `docs/index.md`?
@@ -82,6 +87,10 @@ Gather these facts in one pass before writing anything:
   existing `[project]` block).
 - Are `godot` and `uv` on `PATH`? (`command -v godot`, `command -v uv`.)
 - Does `docs/godot-api/` already exist?
+- Does `test/` exist? Gates the gdUnit4 sample copy.
+- Does `addons/gdUnit4/` already exist? Gates whether the vendor step runs.
+- Is `gh` on `PATH`? (`command -v gh`.) Optional — the gdUnit4 module falls
+  back to the releases API without it.
 - Build and test facts for the _Where truth lives_ fill: `Makefile`,
   `package.json` scripts, CI config (`.github/workflows/`, `.gitlab-ci.yml`),
   README build instructions. Only record what you verify.
@@ -143,6 +152,30 @@ Install the missing toolchain now, or proceed without the regen?
 
 Both answers apply the module. The regen runs only when the toolchain sits on
 `PATH`. If the regen cannot run, Phase 3.6 records a deps-missing fallback and
+continues with the files-only install.
+
+### godot-gdunit4 gate
+
+If `project.godot` exists and the godot-project gate is yes, ask at this confirm
+point, unless the invocation already decided it:
+
+Also apply the opt-in godot-gdunit4 module? Default: no. If yes, the installer
+vendors `addons/gdUnit4/` from the latest release, enables the plugin, adds a
+sample suite, and appends the test-artifact ignores.
+
+The module depends on `godot-project`. If `project.godot` is absent, or the
+godot-project gate is no, the module does not apply. The gate does not ask.
+
+Read the Godot version from `project.godot`'s `config/features`. The latest
+gdUnit4 line requires Godot 4.5 or newer. When the target declares an older
+version, the latest release does not load: record a version gap and default this
+gate to no, or pin the gdUnit4 line that matches the declared version.
+
+If a stop condition above holds, fold this question into that stop. An unclear
+answer means no. Carry the decision to Phase 3.7.
+
+When `godot` is not on `PATH`, the addon cannot import and the sample cannot
+run. State the missing dep. Phase 3.7 records a deps-missing fallback and
 continues with the files-only install.
 
 ### Record-area gate
@@ -231,8 +264,9 @@ empty. The _Where truth lives_ fill from the probe stays as written.
 
 ### 3.3 Git hygiene
 
-Make `.gitignore` cover `.agents/` and `**/.pi-subagents/*`. Create `.gitignore`
-if it does not exist. Create `.agents/` with an empty `.gitkeep` in it.
+Make `.gitignore` cover `.agents/`, `**/.pi-subagents/*`, and `.kilo/`. Create
+`.gitignore` if it does not exist. Create `.agents/` with an empty `.gitkeep` in
+it.
 
 ### 3.4 Install the ste-writing skill
 
@@ -324,6 +358,46 @@ applying the manifest.
 If the target's `AGENTS.md` was merged rather than created, the fragments still
 insert after the `## Skills` anchor — same as for jtbd-coach in 3.5.
 
+### 3.7 Apply the godot-gdunit4 module (opt-in only)
+
+If the Phase 2 decision is yes, read `modules/godot-gdunit4/README.md` from the
+harness tree as the manifest. Apply in this order:
+
+1. Resolve the latest gdUnit4 release tag. Prefer
+   `gh api repos/godot-gdunit-labs/gdUnit4/releases/latest --jq .tag_name`.
+   Without `gh`, read the same value from
+   `https://api.github.com/repos/godot-gdunit-labs/gdUnit4/releases/latest`.
+   Record the resolved tag.
+2. Download the source archive for that tag:
+   `https://github.com/godot-gdunit-labs/gdUnit4/archive/refs/tags/<tag>.zip`.
+   The source archive exists for every tag; it holds the addon.
+3. Extract `addons/gdUnit4/` from the archive into the target repo's `addons/`.
+   When `addons/gdUnit4/` already exists, do not overwrite it: read the
+   `version` from its `plugin.cfg`, record it as the existing install, and skip
+   steps 3 and 4.
+4. Enable the plugin in `project.godot`: add
+   `res://addons/gdUnit4/plugin.cfg` to the `enabled` `PackedStringArray` under
+   `[editor_plugins]`. Create the section when absent. Skip when the path is
+   already listed.
+5. Copy `modules/godot-gdunit4/templates/ExampleTest.gd` to
+   `test/ExampleTest.gd`. Skip when the file already exists.
+6. Append the lines in `modules/godot-gdunit4/gitignore` to the target
+   `.gitignore`. Create the file first if step 3.3 did not.
+7. Append the bullet in
+   `modules/godot-gdunit4/fragments/project-context-row.md` to the
+   `## Project context` section in the `AGENTS.md` written or merged in 3.2.
+   Skip when the bullet is already present.
+8. Refresh the class registry when `godot` is on `PATH`:
+   `godot --headless --editor --quit-after 5`.
+9. Run the sample suite when `godot` is on `PATH`:
+   `godot --headless --path . -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://test --ignoreHeadlessMode`.
+   Expect an exit code of 0. Fall back to the files-only install and record the
+   dep gap when `godot` is missing or the run fails.
+
+If the decision is no, install nothing. Say in the final summary that the module
+can be added later by copying `modules/godot-gdunit4/` from a harness clone and
+applying the manifest.
+
 ## Phase 4 — Record
 
 Write `journals/<area>/<NN>-harness-install.md` now, after the work. Use the
@@ -353,6 +427,15 @@ When the godot-project module ran, record:
 - Whether the first-time regen ran or got skipped.
 - The dep gap, if any, that caused the skip.
 
+When the godot-gdunit4 module ran, record:
+
+- The gate decision (opted in, declined, deps missing).
+- The resolved gdUnit4 release tag.
+- The probe results for `godot` on `PATH`, `gh` on `PATH`, and prior
+  `addons/gdUnit4/` existence.
+- Whether the class-registry refresh and the sample run ran or got skipped.
+- The dep gap, if any, that caused the skip.
+
 ## Phase 5 — Verify and present
 
 Check, then report:
@@ -360,7 +443,8 @@ Check, then report:
 - `journals/README.md` exists and carries the two-tier status grammar.
 - `AGENTS.md` exists (or was merged) with the planning workflow and confirm
   gate.
-- `.gitignore` covers both patterns. `.agents/.gitkeep` exists.
+- `.gitignore` covers all three patterns (`.agents/`, `**/.pi-subagents/*`,
+  `.kilo/`). `.agents/.gitkeep` exists.
 - `skills/ste-writing/SKILL.md` exists.
 - `docs/README.md` exists and carries the authoring contract.
 - `docs/index.md` exists as the empty stub, or is deferred with a noted
@@ -392,10 +476,19 @@ Check, then report:
   - `docs/godot-api/` contains `index.md` plus class files (or, on a
     deps-missing skip, does not yet exist).
   - `.gitignore` carries the `docs/godot-api/` line.
+- If the godot-gdunit4 module ran:
+  - `addons/gdUnit4/` exists and holds `plugin.cfg`.
+  - `project.godot` lists `res://addons/gdUnit4/plugin.cfg` under
+    `[editor_plugins]`.
+  - `test/ExampleTest.gd` exists.
+  - `AGENTS.md` §Project context carries the gdUnit4 bullet.
+  - `.gitignore` carries the `reports/` and `GdUnitRunner.cfg` lines.
+  - The sample suite passes headless (or, on a deps-missing skip, is not run).
 - `git status` lists exactly the files you created or edited — nothing else.
 
 Do not commit. Present the summary: files created, files merged, fallbacks
-taken, the godot-module decision and regen outcome, and anything the user should
-decide (for example, a `CLAUDE.md` that now needs a pointer to `AGENTS.md`).
+taken, the godot-module decision and regen outcome, the gdUnit4-module decision
+and resolved tag, and anything the user should decide (for example, a
+`CLAUDE.md` that now needs a pointer to `AGENTS.md`).
 Mention `templates/AGENTS-nested.md` in the final summary as available for
 subtrees. Do not install it unless the user asks.
